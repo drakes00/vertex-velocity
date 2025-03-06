@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "vertex-velocity"
+version = "0.1.0"
+description = ""
+authors = ["Maxime Puys <drakes00@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.13"
+pygame = "^2.6.1"
+
+
+[tool.poetry.group.dev.dependencies]
+ward = "^0.68.0b0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
