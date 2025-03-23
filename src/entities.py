@@ -2,6 +2,10 @@ import logging
 
 import pygame
 
+MAX_VERTICAL_VELOCITY = 10  # Maximum number of pixels per frame.
+GRAVITY_ACCELERATION = 0.876  # Each frame, the player will accelerate down by this quantity.
+JUMP_ACCELERATION = -8  # When the player jumps, it will accelerate up by this quantity.
+
 
 class PhysicsEntity:
     def __init__(self, game, tilemap, eType, pos, size):
@@ -106,10 +110,10 @@ class PhysicsEntity:
             self.velocity[1] = 0
         elif jump:
             # If the jump key is pressed, jump.
-            self.velocity[1] = -8
+            self.velocity[1] = JUMP_ACCELERATION
         else:
             # Apply gravity.
-            self.velocity[1] = min(10, self.velocity[1] + 0.876)
+            self.velocity[1] = min(MAX_VERTICAL_VELOCITY, self.velocity[1] + GRAVITY_ACCELERATION)
 
         logging.debug(
             f"Player information: pos={self.pos}, velocity={self.velocity}, collisions={self.collisions}, jump={jump}"
