@@ -106,10 +106,10 @@ class PhysicsEntity:
             self.velocity[1] = 0
         elif jump:
             # If the jump key is pressed, jump.
-            self.velocity[1] = -3
+            self.velocity[1] = -8
         else:
             # Apply gravity.
-            self.velocity[1] = min(5, self.velocity[1] + 0.1)
+            self.velocity[1] = min(10, self.velocity[1] + 0.876)
 
         logging.debug(
             f"Player information: pos={self.pos}, velocity={self.velocity}, collisions={self.collisions}, jump={jump}"
