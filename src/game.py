@@ -1,10 +1,14 @@
 import sys
+import logging
 
 import pygame
 
 from entities import PhysicsEntity
 from utils import load_image
 from tilemap import TileMap
+
+# Set up log level.
+logging.basicConfig(level=logging.DEBUG)
 
 
 class Game:
@@ -61,10 +65,7 @@ class Game:
 
     def update(self):
         """Update the game."""
-        self.player.update(
-            ((self.movement["right"] - self.movement["left"]) * 5,
-             (self.movement["down"] - self.movement["up"]) * 5)
-        )
+        self.player.update((self.movement["right"] - self.movement["left"]) * 5, self.movement["up"])
 
     def render(self):
         """Render the game."""
