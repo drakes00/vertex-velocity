@@ -1,6 +1,6 @@
 import pygame
 
-BASE_PATH = "assets/images"
+BASE_PATH = "src/assets/images"
 
 
 def load_image(path):

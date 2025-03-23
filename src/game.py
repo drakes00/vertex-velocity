@@ -4,6 +4,7 @@ import pygame
 
 from entities import PhysicsEntity
 from utils import load_image
+from tilemap import TileMap
 
 
 class Game:
@@ -20,8 +21,10 @@ class Game:
         self.clock = pygame.time.Clock()
 
         self.assets = {
-            "player": load_image("player.png")
+            "player": load_image("player.png"),
+            "brick": load_image("brick.png"),
         }
+        self.tilemap = TileMap(self)
 
         self.movement = {
             "up": False,
@@ -29,7 +32,7 @@ class Game:
             "left": False,
             "right": False
         }
-        self.player = PhysicsEntity(self, "player", (50, 50), (64, 64))
+        self.player = PhysicsEntity(self, self.tilemap, "player", (100, 50), (64, 64))
 
     def processInputs(self):
         """Process the user inputs."""
@@ -66,6 +69,7 @@ class Game:
     def render(self):
         """Render the game."""
         self.screen.fill((14, 219, 248))
+        self.tilemap.render(self.screen)
         self.player.render(self.screen)
         pygame.display.update()
 
