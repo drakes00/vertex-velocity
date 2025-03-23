@@ -1,5 +1,10 @@
 import pygame
 
+# Debug options
+SHOW_GRID = 1
+SHOW_COORDINATES = 2
+SHOW_BOUNDING_BOXES = 4
+
 BASE_PATH = "src/assets/images"
 
 

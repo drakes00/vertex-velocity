@@ -119,5 +119,5 @@ class PhysicsEntity:
             f"Player information: pos={self.pos}, velocity={self.velocity}, collisions={self.collisions}, jump={jump}"
         )
 
-    def render(self, surface):
-        surface.blit(self.game.assets[self.eType], self.pos)
+    def render(self, surface, scroll):
+        surface.blit(self.game.assets[self.eType], (self.pos[0] - scroll[0], self.pos[1] - scroll[1]))

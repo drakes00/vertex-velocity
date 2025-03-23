@@ -5,16 +5,20 @@ import pygame
 
 from entities import PhysicsEntity
 from utils import load_image
+from utils import SHOW_GRID, SHOW_COORDINATES, SHOW_BOUNDING_BOXES
 from tilemap import TileMap
 
 # Set up log level.
-logging.basicConfig(level=logging.DEBUG)
+# logging.basicConfig(level=logging.DEBUG)
 
 
 class Game:
     SCREEN_WIDTH = 1280
     SCREEN_HEIGHT = 720
     FPS = 60
+
+    PLAYER_INIT_POS = (100, 50)
+    PLAYER_SIZE = (64, 64)
 
     def __init__(self):
         """Initialize the game."""
@@ -25,10 +29,12 @@ class Game:
         self.clock = pygame.time.Clock()
 
         self.assets = {
+            "background": load_image("background.png"),
             "player": load_image("player.png"),
             "brick": load_image("brick.png"),
+            "triangle": load_image("triangle.png"),
         }
-        self.tilemap = TileMap(self)
+        self.tilemap = TileMap(self, debugOptions=SHOW_GRID | SHOW_COORDINATES | SHOW_BOUNDING_BOXES)
 
         self.movement = {
             "up": False,
@@ -36,7 +42,8 @@ class Game:
             "left": False,
             "right": False
         }
-        self.player = PhysicsEntity(self, self.tilemap, "player", (100, 50), (64, 64))
+        self.player = PhysicsEntity(self, self.tilemap, "player", self.PLAYER_INIT_POS, self.PLAYER_SIZE)
+        self.scroll = [0, 0]
 
     def processInputs(self):
         """Process the user inputs."""
@@ -65,13 +72,20 @@ class Game:
 
     def update(self):
         """Update the game."""
+        # Explicitely not scrolling vertically.
+        self.scroll[0] += (self.player.rect.centerx - self.SCREEN_WIDTH / 2 - self.scroll[0]) / 10
+
+        # Update player's position.
         self.player.update((self.movement["right"] - self.movement["left"]) * 5, self.movement["up"])
 
     def render(self):
         """Render the game."""
-        self.screen.fill((14, 219, 248))
-        self.tilemap.render(self.screen)
-        self.player.render(self.screen)
+        self.screen.blit(self.assets["background"], (0, 0))
+
+        renderScroll = [int(pos) for pos in self.scroll]
+        self.tilemap.render(self.screen, renderScroll)
+        self.player.render(self.screen, renderScroll)
+
         pygame.display.update()
 
     def run(self):
