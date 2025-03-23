@@ -1,6 +1,6 @@
 import pygame
 
-from utils import SHOW_COORDINATES
+from utils import SHOW_COORDINATES, SHOW_GRID
 
 NEIGHBORS_OFFSETS = [(0, 0), (-1, 0), (-1, -1), (0, -1), (1, -1), (1, 0), (1, 1), (0, 1), (-1, 1)]
 
@@ -76,6 +76,19 @@ class TileMap:
 
         for x in range(scroll[0] // self.tileSize, (scroll[0] + self.game.SCREEN_WIDTH) // self.tileSize + 1):
             for y in range(scroll[1] // self.tileSize, (scroll[1] + self.game.SCREEN_HEIGHT) // self.tileSize + 1):
+                if self.debugOptions & SHOW_GRID:
+                    pygame.draw.rect(
+                        surface,
+                        (255,
+                         255,
+                         255),
+                        (x * self.tileSize - scroll[0],
+                         y * self.tileSize - scroll[1],
+                         self.tileSize,
+                         self.tileSize),
+                        1
+                    )
+
                 tileToCheck = f"{x};{y}"
                 if tileToCheck in self.tilemap:
                     tile = self.tilemap[tileToCheck]
