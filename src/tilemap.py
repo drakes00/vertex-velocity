@@ -20,25 +20,38 @@ class TileMap:
         self.debugOptions = debugOptions
         # self.offgridTiles = []
 
-        for i in range(20):
-            self.tilemap[f"10;{i}"] = {
-                "type": "brick",
-                "pos": (10,
-                        i)
-            }
+    def addTile(self, pos, tileType):
+        """Add a tile to the tilemap.
+        Args:
+            pos (tuple): The position of the tile.
+            tileType (str): The type of the tile.
+        """
+        self.tilemap[f"{pos[0]};{pos[1]}"] = {
+            "type": tileType,
+            "pos": pos
+        }
 
-        for i in range(1000):
-            self.tilemap[f"{i};9"] = {
-                "type": "brick",
-                "pos": (i,
-                        9)
-            }
-            if i % 5 == 0:
-                self.tilemap[f"{i};8"] = {
-                    "type": "triangle",
-                    "pos": (i,
-                            8)
-                }
+    def removeTile(self, pos):
+        """Remove a tile from the tilemap.
+        Args:
+            pos (tuple): The position of the tile.
+        """
+        try:
+            del self.tilemap[f"{pos[0]};{pos[1]}"]
+        except KeyError:
+            pass
+
+    def getTileAt(self, pos):
+        """Get the tile at a position.
+        Args:
+            pos (tuple): The position to check.
+        Returns:
+            dict: The tile at the position.
+        """
+        try:
+            return self.tilemap[f"{pos[0]};{pos[1]}"]
+        except KeyError:
+            return None
 
     def tilesAroud(self, pos):
         """Get the tiles around a position.
