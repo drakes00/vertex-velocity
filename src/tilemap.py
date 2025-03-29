@@ -1,3 +1,4 @@
+import json
 import pygame
 
 from utils import SHOW_COORDINATES, SHOW_GRID
@@ -19,6 +20,20 @@ class TileMap:
         self.tilemap = {}
         self.debugOptions = debugOptions
         # self.offgridTiles = []
+
+    def toJson(self, path):
+        """Saves the tilemap in a JSON file.
+        Args:
+            path (str): Destination file name.
+        """
+        with open(path, "w+") as handle:
+            json.dump(
+                {
+                    "tileSize": self.tileSize,
+                    "tilemap": self.tilemap,
+                },
+                handle,
+            )
 
     def addTile(self, pos, tileType):
         """Add a tile to the tilemap.

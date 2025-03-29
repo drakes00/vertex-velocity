@@ -1,5 +1,6 @@
-import sys
+import argparse
 import logging
+import sys
 
 import pygame
 
@@ -20,7 +21,7 @@ class LevelEditor:
     PLAYER_INIT_POS = (100, 50)
     PLAYER_SIZE = (64, 64)
 
-    def __init__(self):
+    def __init__(self, inputTilemap=None, outputTilemap=None):
         """Initialize the game."""
         pygame.init()
 
@@ -64,6 +65,9 @@ class LevelEditor:
                     self.movement["left"] = True
                 elif event.key == pygame.K_RIGHT:
                     self.movement["right"] = True
+                elif event.key == pygame.K_s and pygame.key.get_mods() & pygame.KMOD_CTRL:
+                    # Save the current tilemap.
+                    self.tilemap.toJson("tilemap.json")
             elif event.type == pygame.KEYUP:
                 if event.key == pygame.K_UP:
                     self.movement["up"] = False
@@ -142,4 +146,17 @@ class LevelEditor:
             self.clock.tick(self.FPS)
 
 
-LevelEditor().run()
+def main():
+    parser = argparse.ArgumentParser(description="Vertex Velocity's Level Editor",)
+    parser.add_argument("-i", "--input", type=str, help="Input file name")
+    parser.add_argument("-o", "--output", type=str, help="Output file name")
+    args = parser.parse_args()
+
+    if not args.input and not args.output:
+        print("Error: at least one of \"-i/--input\" and \"-o/--output\" is required.")
+
+    LevelEditor(args.input, args.output).run()
+
+
+if __name__ == "__main__":
+    main()
