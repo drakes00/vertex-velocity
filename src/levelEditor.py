@@ -25,6 +25,9 @@ class LevelEditor:
         """Initialize the game."""
         pygame.init()
 
+        self.inputTilemap = inputTilemap
+        self.outputTilemap = outputTilemap
+
         pygame.display.set_caption("Vertex Velocity - Level Editor")
         self.screen = pygame.display.set_mode((self.SCREEN_WIDTH, self.SCREEN_HEIGHT))
         self.clock = pygame.time.Clock()
@@ -34,7 +37,11 @@ class LevelEditor:
             "triangle": load_image("triangle.png"),
         }
         self.existingTiles = list(self.assets.keys())
-        self.tilemap = TileMap(self, debugOptions=SHOW_GRID | SHOW_COORDINATES)
+
+        if self.inputTilemap:
+            self.tilemap = TileMap.fromJson(self.inputTilemap, self, debugOptions=SHOW_GRID | SHOW_COORDINATES)
+        else:
+            self.tilemap = TileMap(self, debugOptions=SHOW_GRID | SHOW_COORDINATES)
 
         self.movement = {
             "up": False,
@@ -154,6 +161,7 @@ def main():
 
     if not args.input and not args.output:
         print("Error: at least one of \"-i/--input\" and \"-o/--output\" is required.")
+        sys.exit(1)
 
     LevelEditor(args.input, args.output).run()
 
