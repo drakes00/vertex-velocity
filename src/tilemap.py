@@ -35,6 +35,41 @@ class TileMap:
                 handle,
             )
 
+    @classmethod
+    def fromJson(cls, game, path):
+        """Loads a tilemap from a JSON file.
+        Args:
+            game (Game): The game instance.
+            path (str): Source file name.
+        Returns:
+            TileMap: The loaded tilemap.
+        """
+        with open(path, "r") as handle:
+            data = json.load(handle)
+            tilemap = cls(game, data["tileSize"])
+            tilemap.tilemap = data["tilemap"]
+            return tilemap
+
+    @property
+    def tilemap(self):
+        """Get the tilemap."""
+        return self._tilemap
+
+    @tilemap.setter
+    def tilemap(self, value):
+        """Set the tilemap."""
+        self._tilemap = value
+
+    @property
+    def debugOptions(self):
+        """Get the debug options."""
+        return self._debugOptions
+
+    @debugOptions.setter
+    def debugOptions(self, value):
+        """Set the debug options."""
+        self._debugOptions = value
+
     def addTile(self, pos, tileType):
         """Add a tile to the tilemap.
         Args:
