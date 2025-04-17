@@ -1,5 +1,6 @@
-import sys
+import argparse
 import logging
+import sys
 
 import pygame
 
@@ -20,9 +21,11 @@ class Game:
     PLAYER_INIT_POS = (100, 50)
     PLAYER_SIZE = (64, 64)
 
-    def __init__(self):
+    def __init__(self, inputTilemap=None):
         """Initialize the game."""
         pygame.init()
+
+        self.inputTilemap = inputTilemap
 
         pygame.display.set_caption("Vertex Velocity")
         self.screen = pygame.display.set_mode((self.SCREEN_WIDTH, self.SCREEN_HEIGHT))
@@ -34,7 +37,12 @@ class Game:
             "brick": load_image("brick.png"),
             "triangle": load_image("triangle.png"),
         }
-        self.tilemap = TileMap(self, debugOptions=SHOW_GRID | SHOW_COORDINATES | SHOW_BOUNDING_BOXES)
+
+        if self.inputTilemap:
+            self.tilemap = TileMap.fromJson(self, self.inputTilemap)
+            self.tilemap.debugOptions = SHOW_GRID | SHOW_COORDINATES
+        else:
+            self.tilemap = TileMap(self, debugOptions=SHOW_GRID | SHOW_COORDINATES)
 
         self.movement = {
             "up": False,
@@ -76,7 +84,7 @@ class Game:
         self.scroll[0] += (self.player.rect.centerx - self.SCREEN_WIDTH / 2 - self.scroll[0]) / 10
 
         # Update player's position.
-        self.player.update((self.movement["right"] - self.movement["left"]) * 5, self.movement["up"])
+        self.player.update((self.movement["right"] - self.movement["left"]) * 10, self.movement["up"])
 
     def render(self):
         """Render the game."""
@@ -97,4 +105,17 @@ class Game:
             self.clock.tick(self.FPS)
 
 
-Game().run()
+def main():
+    parser = argparse.ArgumentParser(description="Vertex Velocity's Level Editor",)
+    parser.add_argument("-i", "--input", type=str, help="Input file name")
+    args = parser.parse_args()
+
+    if not args.input:
+        print("Error: \"-i/--input\" is required.")
+        sys.exit(1)
+
+    Game(args.input).run()
+
+
+if __name__ == "__main__":
+    main()
