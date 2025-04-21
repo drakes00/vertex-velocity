@@ -84,7 +84,11 @@ class Game:
         self.scroll[0] += (self.player.rect.centerx - self.SCREEN_WIDTH / 2 - self.scroll[0]) / 10
 
         # Update player's position.
-        self.player.update((self.movement["right"] - self.movement["left"]) * 10, self.movement["up"])
+        self.player.update(
+            (self.movement["right"] - self.movement["left"]) * 2,
+            (self.movement["down"] - self.movement["up"]) * 2,
+            False  #self.movement["up"],
+        )
 
     def render(self):
         """Render the game."""

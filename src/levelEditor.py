@@ -1,5 +1,6 @@
 import argparse
 import logging
+import os
 import sys
 
 import pygame
@@ -37,7 +38,7 @@ class LevelEditor:
         }
         self.existingTiles = list(self.assets.keys())
 
-        if self.inputTilemap:
+        if self.inputTilemap and os.path.exists(self.inputTilemap):
             self.tilemap = TileMap.fromJson(self, self.inputTilemap)
             self.tilemap.debugOptions = SHOW_GRID | SHOW_COORDINATES
         else:
