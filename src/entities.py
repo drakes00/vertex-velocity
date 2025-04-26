@@ -61,16 +61,13 @@ class PhysicsEntity:
             "right": False
         }
 
-    def computeCollisions(self):
+    def computeCollisions(self, playerRect):
         """Compute adjustments correcting collisions with the player."""
 
         # Compute list of nearby tiles that *could* collide with player once moved.
         collisions = self.getPossibleCollisions()
 
         adjustments = []
-
-        # Get player's bounding box.
-        playerRect = self.rect
 
         for collision in collisions:
             # If tentative movement doesn't make the player collide with a tile, no need to handle it.
@@ -129,7 +126,7 @@ class PhysicsEntity:
         adjustments.sort(key=lambda adj: adj['priority'], reverse=True)
         return adjustments
 
-    def handleCollisions(self, frame_movement):
+    def handleCollisions(self):
         """Handle the collisions with player."""
 
         # Reset the collisions before checking.
@@ -139,21 +136,18 @@ class PhysicsEntity:
         collisionOccurred = False
 
         while True:
+            # Get player's bounding box.
+            playerRect = self.rect
+
             # Compute the adjustments needed to correct the collisions.
-            adjustments = self.computeCollisions()
+            adjustments = self.computeCollisions(playerRect)
 
             if not adjustments:
                 break
 
             # Apply the adjustments to the player.
             adjustment = adjustments[0]
-            frame_movement[adjustment["axis"]] += int(adjustment["push"])
-
-            # Apply the movement to the player.
-            self.pos = [
-                self.pos[0] + frame_movement[0],
-                self.pos[1] + frame_movement[1],
-            ]
+            self.pos[adjustment["axis"]] += int(adjustment["push"])
 
             # Mark that a collision occurred.
             collisionOccurred = True
@@ -165,17 +159,15 @@ class PhysicsEntity:
 
         # Compute the movement for the frame using current velocity and input.
         frame_movement = [LRmovement + self.velocity[0], TDmovement + self.velocity[1]]
-        print(f"Player {self.rect} moving by {frame_movement}")
+
+        # Apply the movement to the player.
+        self.pos = [
+            self.pos[0] + frame_movement[0],
+            self.pos[1] + frame_movement[1],
+        ]
 
         # Handle collisions with the player.
-        collisionOccured = self.handleCollisions(frame_movement)
-
-        if not collisionOccured:
-            # Apply the movement to the player.
-            self.pos = [
-                self.pos[0] + frame_movement[0],
-                self.pos[1] + frame_movement[1],
-            ]
+        collisionOccured = self.handleCollisions()
 
         # # Compute velocity for next frame.
         # if self.collisions["down"] or self.collisions["up"]:
