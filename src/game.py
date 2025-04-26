@@ -85,9 +85,8 @@ class Game:
 
         # Update player's position.
         self.player.update(
-            (self.movement["right"] - self.movement["left"]) * 2,
-            (self.movement["down"] - self.movement["up"]) * 2,
-            False  #self.movement["up"],
+            (self.movement["right"] - self.movement["left"]) * 10,
+            self.movement["up"],
         )
 
     def render(self):

@@ -2,9 +2,9 @@ import logging
 
 import pygame
 
-MAX_VERTICAL_VELOCITY = 3  # Maximum number of pixels per frame.
-GRAVITY_ACCELERATION = 0  #0.876  # Each frame, the player will accelerate down by this quantity.
-JUMP_ACCELERATION = -3  # When the player jumps, it will accelerate up by this quantity.
+MAX_VERTICAL_VELOCITY = 10  # Maximum number of pixels per frame.
+GRAVITY_ACCELERATION = 0.876  # Each frame, the player will accelerate down by this quantity.
+JUMP_ACCELERATION = -8  # When the player jumps, it will accelerate up by this quantity.
 
 
 class PhysicsEntity:
@@ -154,11 +154,11 @@ class PhysicsEntity:
 
         return collisionOccurred
 
-    def update(self, LRmovement=0, TDmovement=0, jump=False):
+    def update(self, LRmovement=0, jump=False):
         """Update player position."""
 
         # Compute the movement for the frame using current velocity and input.
-        frame_movement = [LRmovement + self.velocity[0], TDmovement + self.velocity[1]]
+        frame_movement = [LRmovement + self.velocity[0], self.velocity[1]]
 
         # Apply the movement to the player.
         self.pos = [
@@ -169,16 +169,16 @@ class PhysicsEntity:
         # Handle collisions with the player.
         collisionOccured = self.handleCollisions()
 
-        # # Compute velocity for next frame.
-        # if self.collisions["down"] or self.collisions["up"]:
-        #     # If the player is on the ground or hitting the ceiling, reset the vertical velocity.
-        #     self.velocity[1] = 0
-        # elif jump:
-        #     # If the jump key is pressed, jump.
-        #     self.velocity[1] = JUMP_ACCELERATION
-        # else:
-        #     # Apply gravity.
-        #     self.velocity[1] = min(MAX_VERTICAL_VELOCITY, self.velocity[1] + GRAVITY_ACCELERATION)
+        # Compute velocity for next frame.
+        if self.collisions["down"] or self.collisions["up"]:
+            # If the player is on the ground or hitting the ceiling, reset the vertical velocity.
+            self.velocity[1] = 0
+        elif jump:
+            # If the jump key is pressed, jump.
+            self.velocity[1] = JUMP_ACCELERATION
+        else:
+            # Apply gravity.
+            self.velocity[1] = min(MAX_VERTICAL_VELOCITY, self.velocity[1] + GRAVITY_ACCELERATION)
 
         logging.debug(
             f"Player information: pos={self.pos}, velocity={self.velocity}, collisions={self.collisions}, jump={jump}"
