@@ -9,6 +9,7 @@ import pygame
 from entities import Player
 from utils import load_image
 from utils import SHOW_GRID, SHOW_COORDINATES, SHOW_BOUNDING_BOXES
+from utils import HIDE_PARTICLES
 from tilemap import TileMap
 
 # Set up log level.
@@ -44,7 +45,7 @@ class Game:
             self.tilemap = TileMap.fromJson(self, self.inputTilemap)
             # self.tilemap.debugOptions = SHOW_GRID | SHOW_COORDINATES
         else:
-            self.tilemap = TileMap(self, debugOptions=SHOW_GRID | SHOW_COORDINATES)
+            self.tilemap = TileMap(self)
 
         self.movement = {
             "up": False,
@@ -53,6 +54,7 @@ class Game:
             "right": False
         }
         self.player = Player(self, self.tilemap, self.PLAYER_INIT_POS, self.PLAYER_SIZE)
+        # self.player.debugOptions = HIDE_PARTICLES
         self.scroll = [0, 0]
 
     def processInputs(self):

@@ -5,6 +5,7 @@ import logging
 import pygame
 
 from particles import Dust
+from utils import HIDE_PARTICLES
 
 MAX_VERTICAL_VELOCITY = 10  # Maximum number of pixels per frame.
 GRAVITY_ACCELERATION = 0.876  # Each frame, the player will accelerate down by this quantity.
@@ -224,9 +225,10 @@ class PhysicsEntity:
 
 class Player(PhysicsEntity):
     """Class representing the player in the game."""
-    def __init__(self, game, tilemap, pos, size):
+    def __init__(self, game, tilemap, pos, size, debugOptions=0):
         super().__init__(game, tilemap, "player", pos, size)
         self.dust = []
+        self.debugOptions = debugOptions
 
     def __repr__(self):
         return f"Player(pos={self.pos}, size={self.size}, velocity={self.velocity}, dust={len(self.dust)}, collisions={self.collisions})"
@@ -235,24 +237,26 @@ class Player(PhysicsEntity):
         """Update player position."""
         super().update(LRmovement, jump)
 
-        # Add dust particles when the player is moving horizontally.
-        if self.collisions["down"] and LRmovement > 0:
-            # Moving right, particles on the left side of the player.
-            self.dust.append(Dust([self.x, self.y + self.size[1] - 5]))
-        elif self.collisions["down"] and LRmovement < 0:
-            # Moving left, particles on the right side of the player.
-            self.dust.append(Dust([self.x + self.size[0], self.y + self.size[1] - 5]))
+        if not self.debugOptions & HIDE_PARTICLES:
+            # Add dust particles when the player is moving horizontally.
+            if self.collisions["down"] and LRmovement > 0:
+                # Moving right, particles on the left side of the player.
+                self.dust.append(Dust([self.x, self.y + self.size[1] - 5]))
+            elif self.collisions["down"] and LRmovement < 0:
+                # Moving left, particles on the right side of the player.
+                self.dust.append(Dust([self.x + self.size[0], self.y + self.size[1] - 5]))
 
-        # Update the dust particles.
-        for dust in self.dust:
-            dust.update()
-            if not dust.particles:
-                self.dust.remove(dust)
+            # Update the dust particles.
+            for dust in self.dust:
+                dust.update()
+                if not dust.particles:
+                    self.dust.remove(dust)
 
     def render(self, surface, scroll):
         """Render the player on the screen."""
         super().render(surface, scroll)
 
-        # Render the dust particles.
-        for dust in self.dust:
-            dust.render(surface, scroll)
+        if not self.debugOptions & HIDE_PARTICLES:
+            # Render the dust particles.
+            for dust in self.dust:
+                dust.render(surface, scroll)
