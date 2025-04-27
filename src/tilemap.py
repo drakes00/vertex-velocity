@@ -1,3 +1,5 @@
+"""Tiles map for 2D tile-based games."""
+
 import json
 import pygame
 

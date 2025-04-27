@@ -1,3 +1,5 @@
+"""Utility functions for the game."""
+
 import pygame
 
 # Debug options

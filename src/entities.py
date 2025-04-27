@@ -1,6 +1,10 @@
+"""Moduile handling entities physics."""
+
 import logging
 
 import pygame
+
+from particles import Dust
 
 MAX_VERTICAL_VELOCITY = 10  # Maximum number of pixels per frame.
 GRAVITY_ACCELERATION = 0.876  # Each frame, the player will accelerate down by this quantity.
@@ -15,6 +19,7 @@ class PhysicsEntity:
         self.pos = list(pos)
         self.size = size
         self.velocity = [0, 0]
+        self.rotation = 0
         self.collisions = {
             "up": False,
             "down": False,
@@ -22,13 +27,28 @@ class PhysicsEntity:
             "right": False
         }
 
+    def __repr__(self):
+        return f"PhysicsEntity(type={self.eType}, pos={self.pos}, size={self.size}, velocity={self.velocity})"
+
+    @property
+    def x(self):
+        """Return the x-coordinate of the entity."""
+        return self.pos[0]
+
+    @property
+    def y(self):
+        """Return the y-coordinate of the entity."""
+        return self.pos[1]
+
     @property
     def rect(self):
-        return pygame.Rect(self.pos[0], self.pos[1], self.size[0], self.size[1])
+        """Return the rectangle representing the entity."""
+        return pygame.Rect(self.x, self.y, self.size[0], self.size[1])
 
     @property
     def center(self):
-        return (self.pos[0] + self.size[0] // 2, self.pos[1] + self.size[1] // 2)
+        """Return the center of the entity."""
+        return (self.x + self.size[0] // 2, self.y + self.size[1] // 2)
 
     def getPossibleCollisions(self):
         """Handle the collisions with player."""
@@ -114,6 +134,12 @@ class PhysicsEntity:
                         "priority": penetrationX + penetrationY,
                         "push": pushX,
                     })
+
+                    # Update the collision state.
+                    if delta[0] < 0:
+                        self.collisions["left"] = True
+                    else:
+                        self.collisions["right"] = True
                 else:
                     # Collision is vertical.
                     pushY = penetrationY if delta[1] < 0 else -penetrationY
@@ -122,6 +148,12 @@ class PhysicsEntity:
                         "priority": penetrationX + penetrationY,
                         "push": pushY,
                     })
+
+                    # Update the collision state.
+                    if delta[1] < 0:
+                        self.collisions["up"] = True
+                    else:
+                        self.collisions["down"] = True
 
         adjustments.sort(key=lambda adj: adj['priority'], reverse=True)
         return adjustments
@@ -162,8 +194,8 @@ class PhysicsEntity:
 
         # Apply the movement to the player.
         self.pos = [
-            self.pos[0] + frame_movement[0],
-            self.pos[1] + frame_movement[1],
+            self.x + frame_movement[0],
+            self.y + frame_movement[1],
         ]
 
         # Handle collisions with the player.
@@ -180,9 +212,47 @@ class PhysicsEntity:
             # Apply gravity.
             self.velocity[1] = min(MAX_VERTICAL_VELOCITY, self.velocity[1] + GRAVITY_ACCELERATION)
 
-        logging.debug(
-            f"Player information: pos={self.pos}, velocity={self.velocity}, collisions={self.collisions}, jump={jump}"
-        )
+    def render(self, surface, scroll):
+        """Render the player on the screen."""
+
+        # Rotate the entity icon based on the rotation attribute.
+        entityIcon = pygame.transform.rotate(self.game.assets[self.eType], self.rotation)
+
+        # Draw the entity icon.
+        surface.blit(entityIcon, (self.x - scroll[0], self.y - scroll[1]))
+
+
+class Player(PhysicsEntity):
+    """Class representing the player in the game."""
+    def __init__(self, game, tilemap, pos, size):
+        super().__init__(game, tilemap, "player", pos, size)
+        self.dust = []
+
+    def __repr__(self):
+        return f"Player(pos={self.pos}, size={self.size}, velocity={self.velocity}, dust={len(self.dust)}, collisions={self.collisions})"
+
+    def update(self, LRmovement=0, jump=False):
+        """Update player position."""
+        super().update(LRmovement, jump)
+
+        # Add dust particles when the player is moving horizontally.
+        if self.collisions["down"] and LRmovement > 0:
+            # Moving right, particles on the left side of the player.
+            self.dust.append(Dust([self.x, self.y + self.size[1] - 5]))
+        elif self.collisions["down"] and LRmovement < 0:
+            # Moving left, particles on the right side of the player.
+            self.dust.append(Dust([self.x + self.size[0], self.y + self.size[1] - 5]))
+
+        # Update the dust particles.
+        for dust in self.dust:
+            dust.update()
+            if not dust.particles:
+                self.dust.remove(dust)
 
     def render(self, surface, scroll):
-        surface.blit(self.game.assets[self.eType], (self.pos[0] - scroll[0], self.pos[1] - scroll[1]))
+        """Render the player on the screen."""
+        super().render(surface, scroll)
+
+        # Render the dust particles.
+        for dust in self.dust:
+            dust.render(surface, scroll)

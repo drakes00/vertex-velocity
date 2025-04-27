@@ -1,10 +1,12 @@
+"""Vertex Velocity's main game file."""
+
 import argparse
 import logging
 import sys
 
 import pygame
 
-from entities import PhysicsEntity
+from entities import Player
 from utils import load_image
 from utils import SHOW_GRID, SHOW_COORDINATES, SHOW_BOUNDING_BOXES
 from tilemap import TileMap
@@ -40,7 +42,7 @@ class Game:
 
         if self.inputTilemap:
             self.tilemap = TileMap.fromJson(self, self.inputTilemap)
-            self.tilemap.debugOptions = SHOW_GRID | SHOW_COORDINATES
+            # self.tilemap.debugOptions = SHOW_GRID | SHOW_COORDINATES
         else:
             self.tilemap = TileMap(self, debugOptions=SHOW_GRID | SHOW_COORDINATES)
 
@@ -50,7 +52,7 @@ class Game:
             "left": False,
             "right": False
         }
-        self.player = PhysicsEntity(self, self.tilemap, "player", self.PLAYER_INIT_POS, self.PLAYER_SIZE)
+        self.player = Player(self, self.tilemap, self.PLAYER_INIT_POS, self.PLAYER_SIZE)
         self.scroll = [0, 0]
 
     def processInputs(self):

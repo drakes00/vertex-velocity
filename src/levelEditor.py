@@ -1,3 +1,5 @@
+"""Level Editor for Vertex Velocity."""
+
 import argparse
 import logging
 import os
