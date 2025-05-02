@@ -9,7 +9,7 @@ from utils import HIDE_PARTICLES
 
 MAX_VERTICAL_VELOCITY = 10  # Maximum number of pixels per frame.
 GRAVITY_ACCELERATION = 0.876  # Each frame, the player will accelerate down by this quantity.
-JUMP_ACCELERATION = -8  # When the player jumps, it will accelerate up by this quantity.
+JUMP_ACCELERATION = -13.5  # When the player jumps, it will accelerate up by this quantity.
 
 
 class PhysicsEntity:
@@ -129,32 +129,19 @@ class PhysicsEntity:
                 # Determine the direction of the collision.
                 if penetrationX < penetrationY:
                     # Collision is horizontal.
-                    pushX = penetrationX if delta[0] < 0 else -penetrationX
-                    adjustments.append({
-                        "axis": 0,
-                        "priority": penetrationX + penetrationY,
-                        "push": pushX,
-                    })
-
-                    # Update the collision state.
-                    if delta[0] < 0:
-                        self.collisions["left"] = True
-                    else:
-                        self.collisions["right"] = True
+                    push = penetrationX if delta[0] < 0 else -penetrationX
+                    asix = 0
                 else:
                     # Collision is vertical.
-                    pushY = penetrationY if delta[1] < 0 else -penetrationY
-                    adjustments.append({
-                        "axis": 1,
-                        "priority": penetrationX + penetrationY,
-                        "push": pushY,
-                    })
+                    push = penetrationY if delta[1] < 0 else -penetrationY
+                    asix = 1
 
-                    # Update the collision state.
-                    if delta[1] < 0:
-                        self.collisions["up"] = True
-                    else:
-                        self.collisions["down"] = True
+                # Append the adjustment to the list.
+                adjustments.append({
+                    "axis": asix,
+                    "priority": penetrationX + penetrationY,
+                    "push": push,
+                })
 
         adjustments.sort(key=lambda adj: adj['priority'], reverse=True)
         return adjustments
@@ -185,13 +172,25 @@ class PhysicsEntity:
             # Mark that a collision occurred.
             collisionOccurred = True
 
+            # Update collision state.
+            if adjustment["axis"] == 0:
+                if adjustment["push"] > 0:
+                    self.collisions["left"] = True
+                else:
+                    self.collisions["right"] = True
+            else:
+                if adjustment["push"] > 0:
+                    self.collisions["up"] = True
+                else:
+                    self.collisions["down"] = True
+
         return collisionOccurred
 
-    def update(self, LRmovement=0, jump=False):
+    def update(self, LRmovement=0, TDmovement=0):
         """Update player position."""
 
         # Compute the movement for the frame using current velocity and input.
-        frame_movement = [LRmovement + self.velocity[0], self.velocity[1]]
+        frame_movement = [LRmovement + self.velocity[0], TDmovement + self.velocity[1]]
 
         # Apply the movement to the player.
         self.pos = [
@@ -206,9 +205,6 @@ class PhysicsEntity:
         if self.collisions["down"] or self.collisions["up"]:
             # If the player is on the ground or hitting the ceiling, reset the vertical velocity.
             self.velocity[1] = 0
-        elif jump:
-            # If the jump key is pressed, jump.
-            self.velocity[1] = JUMP_ACCELERATION
         else:
             # Apply gravity.
             self.velocity[1] = min(MAX_VERTICAL_VELOCITY, self.velocity[1] + GRAVITY_ACCELERATION)
@@ -229,20 +225,30 @@ class Player(PhysicsEntity):
         super().__init__(game, tilemap, "player", pos, size)
         self.dust = []
         self.debugOptions = debugOptions
+        self.jumpCooldown = False
 
     def __repr__(self):
         return f"Player(pos={self.pos}, size={self.size}, velocity={self.velocity}, dust={len(self.dust)}, collisions={self.collisions})"
 
-    def update(self, LRmovement=0, jump=False):
+    def update(self, jump=False):
         """Update player position."""
-        super().update(LRmovement, jump)
+        if jump and not self.jumpCooldown:
+            # If the jump key is pressed, jump.
+            self.velocity[1] = JUMP_ACCELERATION
+            self.jumpCooldown = True
+
+        super().update(LRmovement=10)
+
+        if self.collisions["down"]:
+            # If the player is on the ground, reset the jump cooldown.
+            self.jumpCooldown = False
 
         if not self.debugOptions & HIDE_PARTICLES:
             # Add dust particles when the player is moving horizontally.
-            if self.collisions["down"] and LRmovement > 0:
+            if self.collisions["down"]:  # and LRmovement > 0:
                 # Moving right, particles on the left side of the player.
                 self.dust.append(Dust([self.x, self.y + self.size[1] - 5]))
-            elif self.collisions["down"] and LRmovement < 0:
+            elif self.collisions["down"]:  # and LRmovement < 0:
                 # Moving left, particles on the right side of the player.
                 self.dust.append(Dust([self.x + self.size[0], self.y + self.size[1] - 5]))
 
