@@ -50,3 +50,7 @@ class Dust:
         """Render all particles in the dust on the screen."""
         for particle in self.particles:
             particle.render(surface, scroll)
+
+    def __repr__(self):
+        """Return a string representation of the dust."""
+        return f"Dust(particles={self.particles})"

@@ -25,7 +25,10 @@ class Game:
     PLAYER_SIZE = (64, 64)
 
     def __init__(self, inputTilemap=None):
-        """Initialize the game."""
+        """Initialize the game.
+        Args:
+            inputTilemap (str, optional): The input tilemap file name. Defaults to None.
+        """
         pygame.init()
 
         self.inputTilemap = inputTilemap
@@ -40,6 +43,7 @@ class Game:
             "brick": load_image("brick.png"),
             "triangle": load_image("triangle.png"),
         }
+        # print(pygame.mask.from_surface(self.assets["triangle"]).overlap())
 
         if self.inputTilemap:
             self.tilemap = TileMap.fromJson(self, self.inputTilemap)
@@ -83,12 +87,21 @@ class Game:
                     self.movement["right"] = False
 
     def update(self):
-        """Update the game."""
+        """Update the game.
+        Returns:
+            bool: True if the game should continue, False if the player is dead.
+        """
         # Explicitely not scrolling vertically.
         self.scroll[0] += (self.player.rect.centerx - self.SCREEN_WIDTH / 2 - self.scroll[0]) / 10
 
         # Update player's position.
         self.player.update(self.movement["up"],)
+
+        # Check player death.
+        if self.player.isDead:
+            return False
+
+        return True
 
     def render(self):
         """Render the game."""
@@ -101,9 +114,11 @@ class Game:
         pygame.display.update()
 
     def run(self):
-        while True:
+        """Run the game."""
+        gameContinue = True
+        while gameContinue:
             self.processInputs()
-            self.update()
+            gameContinue = self.update()
             self.render()
 
             self.clock.tick(self.FPS)

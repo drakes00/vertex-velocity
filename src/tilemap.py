@@ -127,6 +127,15 @@ class TileMap:
         """
         return tile["type"] == "brick"
 
+    def isTileDeadly(self, tile):
+        """Check if a tile is deadly.
+        Args:
+            tile (dict): The tile to check.
+        Returns:
+            bool: True if the tile is deadly, False otherwise.
+        """
+        return tile["type"] == "triangle"
+
     def render(self, surface, scroll=[0, 0]):
         """Render the tilemap.
         Args:

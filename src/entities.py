@@ -27,6 +27,7 @@ class PhysicsEntity:
             "left": False,
             "right": False
         }
+        self.entityState = "alive"
 
     def __repr__(self):
         return f"PhysicsEntity(type={self.eType}, pos={self.pos}, size={self.size}, velocity={self.velocity})"
@@ -51,8 +52,21 @@ class PhysicsEntity:
         """Return the center of the entity."""
         return (self.x + self.size[0] // 2, self.y + self.size[1] // 2)
 
+    @property
+    def isDying(self):
+        """Check if the player is dying."""
+        return self.entityState == "dying"
+
+    @property
+    def isDead(self):
+        """Check if the player is dead."""
+        return self.entityState == "dead"
+
     def getPossibleCollisions(self):
-        """Handle the collisions with player."""
+        """Handle the collisions with player.
+        Returns:
+            list: List of possible collisions with tiles.
+        """
         ret = []
 
         # Iterate over the tiles around the player.
@@ -62,6 +76,19 @@ class PhysicsEntity:
                 ret += [
                     (
                         'solid',  # Collision with a solid tile, prevents movement.
+                        pygame.Rect(
+                            tile["pos"][0] * self.tilemap.tileSize,
+                            tile["pos"][1] * self.tilemap.tileSize,
+                            self.tilemap.tileSize,
+                            self.tilemap.tileSize
+                        )
+                    )
+                ]
+            # Check if the tile is deadly.
+            elif self.tilemap.isTileDeadly(tile):
+                ret += [
+                    (
+                        'deadly',  # Collision with a deadly tile, will kill player.
                         pygame.Rect(
                             tile["pos"][0] * self.tilemap.tileSize,
                             tile["pos"][1] * self.tilemap.tileSize,
@@ -83,7 +110,12 @@ class PhysicsEntity:
         }
 
     def computeCollisions(self, playerRect):
-        """Compute adjustments correcting collisions with the player."""
+        """Compute adjustments correcting collisions with the player.
+        Args:
+            playerRect (pygame.Rect): The rectangle representing the player.
+        Returns:
+            list: List of adjustments needed to correct the collisions.
+        """
 
         # Compute list of nearby tiles that *could* collide with player once moved.
         collisions = self.getPossibleCollisions()
@@ -94,6 +126,13 @@ class PhysicsEntity:
             # If tentative movement doesn't make the player collide with a tile, no need to handle it.
             if not playerRect.colliderect(collision[1]):
                 continue
+
+            # If tile is deadly, kill the player.
+            if collision[0] == 'deadly':
+                # Log the collision with a deadly tile.
+                logging.debug(f"Player collided with a deadly tile at {collision[1]}")
+                self.entityState = "dying"
+                return []
 
             # If tile is not solid, no need to handle it.
             if collision[0] == 'solid':
@@ -147,7 +186,10 @@ class PhysicsEntity:
         return adjustments
 
     def handleCollisions(self):
-        """Handle the collisions with player."""
+        """Handle the collisions with player.
+        Returns:
+            bool: True if a collision occurred, False otherwise.
+        """
 
         # Reset the collisions before checking.
         self.resetCollisions()
@@ -162,6 +204,7 @@ class PhysicsEntity:
             # Compute the adjustments needed to correct the collisions.
             adjustments = self.computeCollisions(playerRect)
 
+            # If no adjustments are needed, break the loop.
             if not adjustments:
                 break
 
@@ -187,7 +230,11 @@ class PhysicsEntity:
         return collisionOccurred
 
     def update(self, LRmovement=0, TDmovement=0):
-        """Update player position."""
+        """Update player position.
+        Args:
+            LRmovement (int): Left/Right movement.
+            TDmovement (int): Up/Down movement.
+        """
 
         # Compute the movement for the frame using current velocity and input.
         frame_movement = [LRmovement + self.velocity[0], TDmovement + self.velocity[1]]
@@ -210,7 +257,11 @@ class PhysicsEntity:
             self.velocity[1] = min(MAX_VERTICAL_VELOCITY, self.velocity[1] + GRAVITY_ACCELERATION)
 
     def render(self, surface, scroll):
-        """Render the player on the screen."""
+        """Render the player on the screen.
+        Args:
+            surface (pygame.Surface): The surface to render the player on.
+            scroll (list): The scroll offset for rendering.
+        """
 
         # Rotate the entity icon based on the rotation attribute.
         entityIcon = pygame.transform.rotate(self.game.assets[self.eType], self.rotation)
@@ -223,15 +274,20 @@ class Player(PhysicsEntity):
     """Class representing the player in the game."""
     def __init__(self, game, tilemap, pos, size, debugOptions=0):
         super().__init__(game, tilemap, "player", pos, size)
-        self.dust = []
+        self.movementDust = []
+        self.deathDust = []
         self.debugOptions = debugOptions
         self.jumpCooldown = False
 
     def __repr__(self):
-        return f"Player(pos={self.pos}, size={self.size}, velocity={self.velocity}, dust={len(self.dust)}, collisions={self.collisions})"
+        return f"Player(pos={self.pos}, size={self.size}, velocity={self.velocity}, dust={len(self.movementDust)}, collisions={self.collisions}, entityState={self.entityState})"
 
     def update(self, jump=False):
         """Update player position."""
+        # Check if the player is dead.
+        if self.entityState != "alive":
+            return
+
         if jump and not self.jumpCooldown:
             # If the jump key is pressed, jump.
             self.velocity[1] = JUMP_ACCELERATION
@@ -243,26 +299,50 @@ class Player(PhysicsEntity):
             # If the player is on the ground, reset the jump cooldown.
             self.jumpCooldown = False
 
-        if not self.debugOptions & HIDE_PARTICLES:
-            # Add dust particles when the player is moving horizontally.
-            if self.collisions["down"]:  # and LRmovement > 0:
-                # Moving right, particles on the left side of the player.
-                self.dust.append(Dust([self.x, self.y + self.size[1] - 5]))
-            elif self.collisions["down"]:  # and LRmovement < 0:
-                # Moving left, particles on the right side of the player.
-                self.dust.append(Dust([self.x + self.size[0], self.y + self.size[1] - 5]))
+        # Add dust particles when the player is moving horizontally.
+        if self.collisions["down"]:  # and LRmovement > 0:
+            # Moving right, particles on the left side of the player.
+            self.movementDust.append(Dust([self.x, self.y + self.size[1] - 5]))
+        elif self.collisions["down"]:  # and LRmovement < 0:
+            # Moving left, particles on the right side of the player.
+            self.movementDust.append(Dust([self.x + self.size[0], self.y + self.size[1] - 5]))
 
-            # Update the dust particles.
-            for dust in self.dust:
-                dust.update()
-                if not dust.particles:
-                    self.dust.remove(dust)
+        # Update the dust particles.
+        for dust in self.movementDust:
+            dust.update()
+            if not dust.particles:
+                self.movementDust.remove(dust)
 
     def render(self, surface, scroll):
         """Render the player on the screen."""
-        super().render(surface, scroll)
 
-        if not self.debugOptions & HIDE_PARTICLES:
+        # Check if the entity is dead.
+        if self.entityState == "alive":
+            super().render(surface, scroll)
+
             # Render the dust particles.
-            for dust in self.dust:
+            for dust in self.movementDust:
+                dust.render(surface, scroll)
+        elif self.entityState == "dying":
+            # If the entity is dead, render a death animation.
+            self.renderDeathAnimation(surface, scroll)
+
+    def renderDeathAnimation(self, surface, scroll):
+        """Render the death animation."""
+        self.movementDust = []
+
+        if not self.deathDust:
+            # Create dust particles at the player's position.
+            for i in range(20):
+                self.deathDust.append(Dust([self.x + self.size[0] // 2, self.y + self.size[1] // 2]))
+
+        # Render the dust particles.
+        for dust in self.deathDust:
+            dust.update()
+            if not dust.particles:
+                self.deathDust.remove(dust)
+                if not self.deathDust:
+                    # If all dust particles are gone, set the entity state to dead.
+                    self.entityState = "dead"
+            else:
                 dust.render(surface, scroll)
