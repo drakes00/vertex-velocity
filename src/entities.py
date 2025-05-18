@@ -71,7 +71,7 @@ class PhysicsEntity:
         ret = []
 
         # Iterate over the tiles around the player.
-        for tile in self.tilemap.tilesAroud(self.pos):
+        for tileRelPos, tile in self.tilemap.tilesAroud(self.pos):
             # Check if the tile is solid.
             if self.tilemap.isTileSolid(tile):
                 ret += [
@@ -83,7 +83,8 @@ class PhysicsEntity:
                             tile["pos"][1] * self.tilemap.tileSize,
                             self.tilemap.tileSize,
                             self.tilemap.tileSize,
-                        )
+                        ),
+                        "relpos": tileRelPos,
                     }
                 ]
             # Check if the tile is deadly.
@@ -98,7 +99,8 @@ class PhysicsEntity:
                             tile["pos"][1] * self.tilemap.tileSize,
                             self.tilemap.tileSize,
                             self.tilemap.tileSize,
-                        )
+                        ),
+                        "relpos": tileRelPos,
                     }
                 ]
 
@@ -139,7 +141,7 @@ class PhysicsEntity:
             # If tile is deadly, kill the player.
             if collision["type"] == 'deadly':
                 # Log the collision with a deadly tile.
-                logging.debug(f"Player collided with a deadly tile at {collision['rect']}.")
+                logging.debug(f"Player collided with a deadly tile at {collision['rect']} ({collision['relpos']}.")
                 self.entityState = "dying"
                 return []
 
@@ -179,12 +181,6 @@ class PhysicsEntity:
                     # Collision is horizontal.
                     push = penetrationX if delta[0] < 0 else -penetrationX
                     asix = 0
-
-                    # Detect a collision with a solid tile arriving on the right will be deadly.
-                    if penetrationX > 0:
-                        print(f"Player collided with a solid tile at {collision['rect']}.")
-                        # self.entityState = "dying"
-                        # return []
                 else:
                     # Collision is vertical.
                     push = penetrationY if delta[1] < 0 else -penetrationY
@@ -225,6 +221,12 @@ class PhysicsEntity:
 
             # Apply the adjustments to the player.
             adjustment = adjustments[0]
+
+            # First, detect a collision with a solid tile arriving on the right will be deadly.
+            if adjustment["axis"] == 0 and adjustment["push"] < 0:
+                self.entityState = "dying"
+                return True
+
             self.pos[adjustment["axis"]] += int(adjustment["push"])
 
             # Mark that a collision occurred.

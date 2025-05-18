@@ -5,7 +5,24 @@ import pygame
 
 from utils import SHOW_COORDINATES, SHOW_GRID, SHOW_COLLISION
 
-NEIGHBORS_OFFSETS = [(0, 0), (-1, 0), (-1, -1), (0, -1), (1, -1), (1, 0), (1, 1), (0, 1), (-1, 1)]
+NEIGHBORS_OFFSETS = {
+    "right": (1,
+              0),
+    "down": (0,
+             1),
+    "left": (-1,
+             0),
+    "up": (0,
+           -1),
+    "right-down": (1,
+                   1),
+    "right-up": (1,
+                 -1),
+    "left-down": (-1,
+                  1),
+    "left-up": (-1,
+                -1),
+}  # Purposely sorting tiles from the closest to the farthest.
 
 
 class TileMap:
@@ -113,10 +130,10 @@ class TileMap:
             dict: Tiles around the position.
         """
         tilePos = (int(pos[0] // self.tileSize), int(pos[1] // self.tileSize))
-        for offset in NEIGHBORS_OFFSETS:
+        for name, offset in NEIGHBORS_OFFSETS.items():
             tileToCheck = str(tilePos[0] + offset[0]) + ";" + str(tilePos[1] + offset[1])
             if tileToCheck in self.tilemap:
-                yield self.tilemap[tileToCheck]
+                yield (name, self.tilemap[tileToCheck])
 
     def isTileSolid(self, tile):
         """Check if a tile is solid.

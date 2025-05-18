@@ -19,7 +19,7 @@ from tilemap import TileMap
 class Game:
     SCREEN_WIDTH = 1280
     SCREEN_HEIGHT = 720
-    FPS = 20
+    FPS = 60
 
     PLAYER_INIT_POS = (100, 50)
     PLAYER_SIZE = (64, 64)
@@ -46,7 +46,7 @@ class Game:
 
         if self.inputTilemap:
             self.tilemap = TileMap.fromJson(self, self.inputTilemap)
-            self.tilemap.debugOptions = SHOW_GRID | SHOW_COORDINATES | SHOW_COLLISION
+            # self.tilemap.debugOptions = SHOW_GRID | SHOW_COORDINATES | SHOW_COLLISION
         else:
             self.tilemap = TileMap(self)
 
