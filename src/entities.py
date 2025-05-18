@@ -253,6 +253,11 @@ class PhysicsEntity:
             TDmovement (int): Up/Down movement.
         """
 
+        # Detect if player fells off the screen.
+        if self.y > self.game.SCREEN_HEIGHT:
+            self.entityState = "dying"
+            return
+
         # Compute the movement for the frame using current velocity and input.
         frame_movement = [LRmovement + self.velocity[0], TDmovement + self.velocity[1]]
 

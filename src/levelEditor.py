@@ -9,7 +9,7 @@ import pygame
 
 from entities import PhysicsEntity
 from utils import load_image
-from utils import SHOW_GRID, SHOW_COORDINATES, SHOW_BOUNDING_BOXES
+from utils import SHOW_GRID, SHOW_COORDINATES
 from tilemap import TileMap
 
 # Set up log level.
