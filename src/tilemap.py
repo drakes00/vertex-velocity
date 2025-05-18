@@ -136,6 +136,16 @@ class TileMap:
         """
         return tile["type"] == "triangle"
 
+    def tileBoundingBox(self, tile):
+        """Get the bounding box of a tile.
+        Args:
+            tile (dict): The tile to check.
+        Returns:
+            pygame.Mask: The bounding box of the tile.
+        """
+        surface = self.game.assets[tile["type"]]
+        return pygame.mask.from_surface(surface)
+
     def render(self, surface, scroll=[0, 0]):
         """Render the tilemap.
         Args:

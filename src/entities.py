@@ -17,6 +17,7 @@ class PhysicsEntity:
         self.game = game
         self.tilemap = tilemap
         self.eType = eType
+        self.mask = pygame.mask.from_surface(self.game.assets[eType])
         self.pos = list(pos)
         self.size = size
         self.velocity = [0, 0]
@@ -74,28 +75,31 @@ class PhysicsEntity:
             # Check if the tile is solid.
             if self.tilemap.isTileSolid(tile):
                 ret += [
-                    (
-                        'solid',  # Collision with a solid tile, prevents movement.
-                        pygame.Rect(
+                    {
+                        "type": "solid",  # Collision with a solid tile, prevents movement.
+                        "bbox": self.tilemap.tileBoundingBox(tile),
+                        "rect": pygame.Rect(
                             tile["pos"][0] * self.tilemap.tileSize,
                             tile["pos"][1] * self.tilemap.tileSize,
                             self.tilemap.tileSize,
-                            self.tilemap.tileSize
+                            self.tilemap.tileSize,
                         )
-                    )
+                    }
                 ]
             # Check if the tile is deadly.
             elif self.tilemap.isTileDeadly(tile):
+                self.tilemap.tileBoundingBox(tile)
                 ret += [
-                    (
-                        'deadly',  # Collision with a deadly tile, will kill player.
-                        pygame.Rect(
+                    {
+                        "type": "deadly",  # Collision with a deadly tile, will kill player.
+                        "bbox": self.tilemap.tileBoundingBox(tile),
+                        "rect": pygame.Rect(
                             tile["pos"][0] * self.tilemap.tileSize,
                             tile["pos"][1] * self.tilemap.tileSize,
                             self.tilemap.tileSize,
-                            self.tilemap.tileSize
+                            self.tilemap.tileSize,
                         )
-                    )
+                    }
                 ]
 
         return ret
@@ -124,22 +128,23 @@ class PhysicsEntity:
 
         for collision in collisions:
             # If tentative movement doesn't make the player collide with a tile, no need to handle it.
-            if not playerRect.colliderect(collision[1]):
+            playerOffset = (playerRect.x - collision["rect"].x, playerRect.y - collision["rect"].y)
+            if not collision["bbox"].overlap(self.mask, playerOffset):
                 continue
 
             # If tile is deadly, kill the player.
-            if collision[0] == 'deadly':
+            if collision["type"] == 'deadly':
                 # Log the collision with a deadly tile.
-                logging.debug(f"Player collided with a deadly tile at {collision[1]}")
+                logging.debug(f"Player collided with a deadly tile at {collision['rect']}.")
                 self.entityState = "dying"
                 return []
 
             # If tile is not solid, no need to handle it.
-            if collision[0] == 'solid':
+            if collision["type"] == 'solid':
                 # Compute the center of the colliding tile.
                 collidingTileCenter = [
-                    collision[1].x + collision[1].width // 2,
-                    collision[1].y + collision[1].height // 2
+                    collision["rect"].x + collision["rect"].width // 2,
+                    collision["rect"].y + collision["rect"].height // 2
                 ]
 
                 # Compute the difference between the player's center and the colliding tile's center.
@@ -148,8 +153,8 @@ class PhysicsEntity:
                 # Calculate combined half-dimensions
                 halfPlayerWidth = self.size[0] / 2.0  # Use float division
                 halfPlayerHeight = self.size[1] / 2.0
-                halfTileWidth = collision[1].width / 2.0
-                halfTileHeight = collision[1].height / 2.0
+                halfTileWidth = collision["rect"].width / 2.0
+                halfTileHeight = collision["rect"].height / 2.0
 
                 combinedHalfWidth = halfPlayerWidth + halfTileWidth
                 combinedHalfHeight = halfPlayerHeight + halfTileHeight

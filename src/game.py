@@ -43,7 +43,6 @@ class Game:
             "brick": load_image("brick.png"),
             "triangle": load_image("triangle.png"),
         }
-        # print(pygame.mask.from_surface(self.assets["triangle"]).overlap())
 
         if self.inputTilemap:
             self.tilemap = TileMap.fromJson(self, self.inputTilemap)
