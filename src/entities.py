@@ -106,6 +106,7 @@ class PhysicsEntity:
 
     def resetCollisions(self):
         """Reset the collisions."""
+        self.tilemap.resetCollisions()
         self.collisions = {
             "up": False,
             "down": False,
@@ -131,6 +132,9 @@ class PhysicsEntity:
             playerOffset = (playerRect.x - collision["rect"].x, playerRect.y - collision["rect"].y)
             if not collision["bbox"].overlap(self.mask, playerOffset):
                 continue
+
+            # Render the collision for debugging purposes.
+            self.tilemap.markCollision(collision["rect"])
 
             # If tile is deadly, kill the player.
             if collision["type"] == 'deadly':
@@ -175,6 +179,12 @@ class PhysicsEntity:
                     # Collision is horizontal.
                     push = penetrationX if delta[0] < 0 else -penetrationX
                     asix = 0
+
+                    # Detect a collision with a solid tile arriving on the right will be deadly.
+                    if penetrationX > 0:
+                        print(f"Player collided with a solid tile at {collision['rect']}.")
+                        # self.entityState = "dying"
+                        # return []
                 else:
                     # Collision is vertical.
                     push = penetrationY if delta[1] < 0 else -penetrationY

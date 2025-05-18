@@ -8,7 +8,7 @@ import pygame
 
 from entities import Player
 from utils import load_image
-from utils import SHOW_GRID, SHOW_COORDINATES, SHOW_BOUNDING_BOXES
+from utils import SHOW_GRID, SHOW_COORDINATES, SHOW_COLLISION
 from utils import HIDE_PARTICLES
 from tilemap import TileMap
 
@@ -19,7 +19,7 @@ from tilemap import TileMap
 class Game:
     SCREEN_WIDTH = 1280
     SCREEN_HEIGHT = 720
-    FPS = 60
+    FPS = 20
 
     PLAYER_INIT_POS = (100, 50)
     PLAYER_SIZE = (64, 64)
@@ -46,7 +46,7 @@ class Game:
 
         if self.inputTilemap:
             self.tilemap = TileMap.fromJson(self, self.inputTilemap)
-            # self.tilemap.debugOptions = SHOW_GRID | SHOW_COORDINATES
+            self.tilemap.debugOptions = SHOW_GRID | SHOW_COORDINATES | SHOW_COLLISION
         else:
             self.tilemap = TileMap(self)
 
@@ -57,7 +57,6 @@ class Game:
             "right": False
         }
         self.player = Player(self, self.tilemap, self.PLAYER_INIT_POS, self.PLAYER_SIZE)
-        # self.player.debugOptions = HIDE_PARTICLES
         self.scroll = [0, 0]
 
     def processInputs(self):

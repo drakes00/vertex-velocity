@@ -5,7 +5,7 @@ import pygame
 # Debug options for tilemap rendering
 SHOW_GRID = 1
 SHOW_COORDINATES = 2
-SHOW_BOUNDING_BOXES = 4
+SHOW_COLLISION = 4
 
 # Debug options for player rendering
 HIDE_PARTICLES = 1
