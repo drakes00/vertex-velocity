@@ -17,8 +17,8 @@ from tilemap import TileMap
 
 
 class LevelEditor:
-    SCREEN_WIDTH = 1280
-    SCREEN_HEIGHT = 720
+    SCREEN_WIDTH = 2560
+    SCREEN_HEIGHT = 1440
     FPS = 60
 
     PLAYER_INIT_POS = (100, 50)

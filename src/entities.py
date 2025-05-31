@@ -7,9 +7,9 @@ import pygame
 from particles import Dust
 from utils import HIDE_PARTICLES
 
-MAX_VERTICAL_VELOCITY = 10  # Maximum number of pixels per frame.
-GRAVITY_ACCELERATION = 0.876  # Each frame, the player will accelerate down by this quantity.
-JUMP_ACCELERATION = -13.5  # When the player jumps, it will accelerate up by this quantity.
+MAX_VERTICAL_VELOCITY = 80  # Maximum number of pixels per frame.
+GRAVITY_ACCELERATION = 1  # Each frame, the player will accelerate down by this quantity.
+JUMP_ACCELERATION = -17.2  # When the player jumps, it will accelerate up by this quantity.
 
 
 class PhysicsEntity:
@@ -84,6 +84,7 @@ class PhysicsEntity:
                             self.tilemap.tileSize,
                             self.tilemap.tileSize,
                         ),
+                        "tilepos": tile["pos"],
                         "relpos": tileRelPos,
                     }
                 ]
@@ -100,6 +101,7 @@ class PhysicsEntity:
                             self.tilemap.tileSize,
                             self.tilemap.tileSize,
                         ),
+                        "tilepos": tile["pos"],
                         "relpos": tileRelPos,
                     }
                 ]
@@ -155,6 +157,7 @@ class PhysicsEntity:
 
                 # Compute the difference between the player's center and the colliding tile's center.
                 delta = [collidingTileCenter[0] - playerRect.centerx, collidingTileCenter[1] - playerRect.centery]
+                print(f"Player position when colliding with tile ({collision['tilepos']}): {self.pos}, delta: {delta}")
 
                 # Calculate combined half-dimensions
                 halfPlayerWidth = self.size[0] / 2.0  # Use float division
@@ -315,7 +318,7 @@ class Player(PhysicsEntity):
             self.velocity[1] = JUMP_ACCELERATION
             self.jumpCooldown = True
 
-        super().update(LRmovement=10)
+        super().update(LRmovement=8)
 
         if self.collisions["down"]:
             # If the player is on the ground, reset the jump cooldown.

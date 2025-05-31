@@ -19,7 +19,7 @@ from tilemap import TileMap
 class Game:
     SCREEN_WIDTH = 1280
     SCREEN_HEIGHT = 720
-    FPS = 60
+    FPS = 64
 
     PLAYER_INIT_POS = (100, 50)
     PLAYER_SIZE = (64, 64)
