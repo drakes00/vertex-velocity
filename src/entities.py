@@ -31,7 +31,6 @@ class Entity:
         self.pos = list(pos)
         self.size = size
         self.mask = pygame.mask.from_surface(self.game.assets[eType])
-        self.rotation = 0
 
     @property
     def x(self):
@@ -64,8 +63,7 @@ class Entity:
             scroll (list): The scroll offset for rendering.
         """
 
-        entityIcon = pygame.transform.rotate(self.game.assets[self.eType], self.rotation)
-        surface.blit(entityIcon, (self.x - scroll[0], self.y - scroll[1]))
+        surface.blit(self.game.assets[self.eType], (self.x - scroll[0], self.y - scroll[1]))
 
 
 class AliveEntity:
@@ -94,7 +92,6 @@ class PhysicsEntity:
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.velocity = [0, 0]
-        self.rotation = 0
         self.collisions = {
             "up": False,
             "down": False,
