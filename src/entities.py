@@ -85,9 +85,24 @@ class AliveEntity:
 
         return self.entityState == "dead"
 
+    def die(self):
+        """Transition the entity to the dying state."""
+        if not self.isDying and not self.isDead:
+            self.entityState = "dying"
 
-class PhysicsEntity:
-    """Class managing the physics traits of an entity."""
+    def update(self):
+        """Update the entity's position based on its velocity and handle collisions.
+        Args:
+            LRmovement (int): Horizontal movement input in pixels (left/right).
+            TDmovement (int): Vertical movement input in pixels (up/down).
+        """
+
+        if self.y > self.game.SCREEN_HEIGHT:
+            self.entityState = "dying"
+
+
+class OpaqueEntity:
+    """Class managing the colliding traits of an entity."""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -162,12 +177,16 @@ class PhysicsEntity:
             playerRect (pygame.Rect): The rectangle representing the player.
         Returns:
             list: List of adjustments needed to correct the collisions.
+        Note:
+            If the entity also inherits from AliveEntity, deadly collisions
+            will set its state to 'dying' using self.die(). Otherwise, deadly
+            collisions are logged and ignored.
         """
+
+        adjustments = []
 
         # Compute list of nearby tiles that *could* collide with player once moved.
         collisions = self.getPossibleCollisions()
-
-        adjustments = []
 
         for collision in collisions:
             # If tentative movement doesn't make the player collide with a tile, no need to handle it.
@@ -182,8 +201,11 @@ class PhysicsEntity:
             if collision["type"] == 'deadly':
                 # Log the collision with a deadly tile.
                 logging.debug(f"Player collided with a deadly tile at {collision['rect']} ({collision['relpos']}.")
-                self.entityState = "dying"
-                return []
+                try:
+                    self.die()
+                    return []
+                except AttributeError:
+                    logging.debug(f"Deadly collision ignored (entity has no die() method): {self}")
 
             # If tile is not solid, no need to handle it.
             if collision["type"] == 'solid':
@@ -243,6 +265,10 @@ class PhysicsEntity:
         """Handle the collisions with player.
         Returns:
             bool: True if a collision occurred, False otherwise.
+        Note:
+            If the entity also inherits from AliveEntity, deadly collisions
+            will set its state to 'dying' using self.die(). Otherwise, deadly
+            collisions are logged and ignored.
         """
 
         # Reset the collisions before checking.
@@ -267,8 +293,12 @@ class PhysicsEntity:
 
             # First, detect a collision with a solid tile arriving on the right will be deadly.
             if adjustment["axis"] == 0 and adjustment["push"] < 0:
-                self.entityState = "dying"
-                return True
+                logging.debug(f"Entity collided with a solid tile at {self.rect} ({adjustment['push']}) on its right.")
+                try:
+                    self.die()
+                    return True
+                except AttributeError:
+                    logging.warning(f"Deadly side collision ignored (entity has no die() method): {self}")
 
             self.pos[adjustment["axis"]] += int(adjustment["push"])
 
@@ -289,6 +319,27 @@ class PhysicsEntity:
 
         return collisionOccurred
 
+    def update(self):
+        """Update the entity's position based on its velocity and handle collisions.
+        Args:
+            LRmovement (int): Horizontal movement input in pixels (left/right).
+            TDmovement (int): Vertical movement input in pixels (up/down).
+        """
+
+        self.resetCollisions()
+        self.handleCollisions()
+
+        if self.collisions["down"] or self.collisions["up"]:
+            self.velocity[1] = 0
+
+
+class PhysicsEntity:
+    """Class managing the physics traits of an entity."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.velocity = [0, 0]
+
     def update(self, LRmovement=0, TDmovement=0):
         """Update the entity's position based on its velocity and handle collisions.
         Args:
@@ -296,23 +347,12 @@ class PhysicsEntity:
             TDmovement (int): Vertical movement input in pixels (up/down).
         """
 
-        if self.y > self.game.SCREEN_HEIGHT:
-            self.entityState = "dying"
-            return
-
         frame_movement = [LRmovement + self.velocity[0], TDmovement + self.velocity[1]]
         self.pos = [self.x + frame_movement[0], self.y + frame_movement[1]]
-
-        self.resetCollisions()
-        self.handleCollisions()
-
-        if self.collisions["down"] or self.collisions["up"]:
-            self.velocity[1] = 0
-        else:
-            self.velocity[1] = min(MAX_VERTICAL_VELOCITY, self.velocity[1] + GRAVITY_ACCELERATION)
+        self.velocity[1] = min(MAX_VERTICAL_VELOCITY, self.velocity[1] + GRAVITY_ACCELERATION)
 
 
-class Player(AliveEntity, PhysicsEntity, Entity):
+class Player(AliveEntity, OpaqueEntity, PhysicsEntity, Entity):
     """Class representing the player in the game."""
 
     def __init__(self, game, tilemap, pos, size, debugOptions=0):
@@ -350,7 +390,9 @@ class Player(AliveEntity, PhysicsEntity, Entity):
             self.jumpCooldown = True
             logging.debug(f"Player jumped at tick {self.game.currentTick} from position {self.pos}.")
 
-        super().update(LRmovement=8)
+        AliveEntity.update(self)
+        OpaqueEntity.update(self)
+        PhysicsEntity.update(self, LRmovement=8)
 
         if self.collisions["down"]:
             # If the player is on the ground, reset the jump cooldown.
