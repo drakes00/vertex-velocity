@@ -157,7 +157,9 @@ class PhysicsEntity:
 
                 # Compute the difference between the player's center and the colliding tile's center.
                 delta = [collidingTileCenter[0] - playerRect.centerx, collidingTileCenter[1] - playerRect.centery]
-                print(f"Player position when colliding with tile ({collision['tilepos']}): {self.pos}, delta: {delta}")
+                # logging.debug(
+                #     f"Player position when colliding with tile ({collision['tilepos']}): {self.pos}, delta: {delta}"
+                # )
 
                 # Calculate combined half-dimensions
                 halfPlayerWidth = self.size[0] / 2.0  # Use float division
@@ -317,6 +319,7 @@ class Player(PhysicsEntity):
             # If the jump key is pressed, jump.
             self.velocity[1] = JUMP_ACCELERATION
             self.jumpCooldown = True
+            logging.debug(f"Player jumped at tick {self.game.currentTick} from position {self.pos}.")
 
         super().update(LRmovement=8)
 

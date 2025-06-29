@@ -24,10 +24,10 @@ class Game:
     PLAYER_INIT_POS = (100, 50)
     PLAYER_SIZE = (64, 64)
 
-    def __init__(self, inputTilemap=None):
+    def __init__(self, inputTilemap):
         """Initialize the game.
         Args:
-            inputTilemap (str, optional): The input tilemap file name. Defaults to None.
+            inputTilemap (str): The input tilemap file name.
         """
         pygame.init()
 
@@ -58,6 +58,12 @@ class Game:
         }
         self.player = Player(self, self.tilemap, self.PLAYER_INIT_POS, self.PLAYER_SIZE)
         self.scroll = list(self.PLAYER_INIT_POS)
+        self.tickCount = 0
+
+    @property
+    def currentTick(self):
+        """Get the current game tick."""
+        return str(self.tickCount)
 
     def processInputs(self):
         """Process the user inputs."""
@@ -120,18 +126,19 @@ class Game:
             self.render()
 
             self.clock.tick(self.FPS)
+            self.tickCount += 1
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Vertex Velocity's Level Editor",)
-    parser.add_argument("-i", "--input", type=str, help="Input file name")
+    parser = argparse.ArgumentParser(description="Vertex Velocity")
+    parser.add_argument("-l", "--level", type=str, help="Level file name")
     args = parser.parse_args()
 
-    if not args.input:
-        print("Error: \"-i/--input\" is required.")
+    if not args.level:
+        print("Error: \"-l/--level\" is required.")
         sys.exit(1)
 
-    Game(args.input).run()
+    Game(args.level).run()
 
 
 if __name__ == "__main__":
