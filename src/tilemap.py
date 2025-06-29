@@ -27,6 +27,7 @@ NEIGHBORS_OFFSETS = {
 
 class TileMap:
     """A class to represent the tilemap."""
+
     def __init__(self, game, tileSize=64, debugOptions=0):
         """Initialize the tilemap.
         Args:
@@ -34,6 +35,7 @@ class TileMap:
             tileSize (int, optional): The size of the tiles. Defaults to 64.
             debugOptions (int bit vector, optional): The debug options (1 = show grid, 2 = show coordinates). Defaults to 0.
         """
+
         self.game = game
         self.tileSize = tileSize
         self.tilemap = {}
@@ -45,6 +47,7 @@ class TileMap:
         Args:
             path (str): Destination file name.
         """
+
         with open(path, "w+") as handle:
             json.dump(
                 {
@@ -63,6 +66,7 @@ class TileMap:
         Returns:
             TileMap: The loaded tilemap.
         """
+
         with open(path, "r") as handle:
             data = json.load(handle)
             tilemap = cls(game, data["tileSize"])
@@ -72,21 +76,25 @@ class TileMap:
     @property
     def tilemap(self):
         """Get the tilemap."""
+
         return self._tilemap
 
     @tilemap.setter
     def tilemap(self, value):
         """Set the tilemap."""
+
         self._tilemap = value
 
     @property
     def debugOptions(self):
         """Get the debug options."""
+
         return self._debugOptions
 
     @debugOptions.setter
     def debugOptions(self, value):
         """Set the debug options."""
+
         self._debugOptions = value
 
     def addTile(self, pos, tileType):
@@ -95,6 +103,7 @@ class TileMap:
             pos (tuple): The position of the tile.
             tileType (str): The type of the tile.
         """
+
         self.tilemap[f"{pos[0]};{pos[1]}"] = {
             "type": tileType,
             "pos": pos
@@ -105,6 +114,7 @@ class TileMap:
         Args:
             pos (tuple): The position of the tile.
         """
+
         try:
             del self.tilemap[f"{pos[0]};{pos[1]}"]
         except KeyError:
@@ -117,6 +127,7 @@ class TileMap:
         Returns:
             dict: The tile at the position.
         """
+
         try:
             return self.tilemap[f"{pos[0]};{pos[1]}"]
         except KeyError:
@@ -129,6 +140,7 @@ class TileMap:
         Yields:
             dict: Tiles around the position.
         """
+
         tilePos = (int(pos[0] // self.tileSize), int(pos[1] // self.tileSize))
         for name, offset in NEIGHBORS_OFFSETS.items():
             tileToCheck = str(tilePos[0] + offset[0]) + ";" + str(tilePos[1] + offset[1])
@@ -142,6 +154,7 @@ class TileMap:
         Returns:
             bool: True if the tile is solid, False otherwise.
         """
+
         return tile["type"] == "brick"
 
     def isTileDeadly(self, tile):
@@ -151,6 +164,7 @@ class TileMap:
         Returns:
             bool: True if the tile is deadly, False otherwise.
         """
+
         return tile["type"] == "spike"
 
     def tileBoundingBox(self, tile):
@@ -160,18 +174,21 @@ class TileMap:
         Returns:
             pygame.Mask: The bounding box of the tile.
         """
+
         surface = self.game.assets[tile["type"]]
         return pygame.mask.from_surface(surface)
 
     def resetCollisions(self):
-        """Reset the colliding tiles."""
+        """Reset the colliding tiles for debugging purposes."""
+
         self.collidingTiles = []
 
     def markCollision(self, collidingTile):
-        """Mark a tile as colliding.
+        """Mark a tile as colliding for debugging purposes.
         Args:
             collidingTile (Rect): The tile to mark as colliding.
         """
+
         tilePos = (int(collidingTile[0] // self.tileSize), int(collidingTile[1] // self.tileSize))
         if tilePos not in self.collidingTiles:
             self.collidingTiles.append(tilePos)
@@ -181,8 +198,6 @@ class TileMap:
         Args:
             surface (pygame.Surface): The surface to render the tilemap on.
         """
-        # for tile in self.offgridTiles:
-        #     surface.blit(self.game.assets[tile["type"]], (tile["pos"][0] - scroll[0], tile["pos"][1] - scroll[1]))
 
         if self.debugOptions & SHOW_COORDINATES:
             # Prepare the font for writing debug messages on the screen.
@@ -200,18 +215,25 @@ class TileMap:
                     )
 
                 if self.debugOptions & SHOW_GRID:
-                    if self.debugOptions & SHOW_COLLISION and (x, y) in self.collidingTiles:
-                        color = (255, 0, 0)  # Red for colliding tiles.
-                    else:
-                        color = (255, 255, 255)  # White for normal tiles.
                     pygame.draw.rect(
                         surface,
-                        color,
+                        (255, 255, 255),  # White for grid lines.
                         (x * self.tileSize - scroll[0],
                          y * self.tileSize - scroll[1],
                          self.tileSize,
                          self.tileSize),
-                        1
+                        1,  # Thickness of the grid lines.
+                    )
+
+                if self.debugOptions & SHOW_COLLISION and (x, y) in self.collidingTiles:
+                    pygame.draw.rect(
+                        surface,
+                        (255, 0, 0),  # Red for colliding tiles.
+                        (x * self.tileSize - scroll[0],
+                         y * self.tileSize - scroll[1],
+                         self.tileSize,
+                         self.tileSize),
+                        10,  # Thickness of the grid lines.
                     )
 
                 if self.debugOptions & SHOW_COORDINATES:

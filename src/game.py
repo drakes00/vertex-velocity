@@ -46,7 +46,10 @@ class Game:
 
         if self.inputTilemap:
             self.tilemap = TileMap.fromJson(self, self.inputTilemap)
-            # self.tilemap.debugOptions = SHOW_GRID | SHOW_COORDINATES | SHOW_COLLISION
+            self.tilemap.debugOptions = 0
+            # self.tilemap.debugOptions |= SHOW_GRID
+            # self.tilemap.debugOptions |= SHOW_COORDINATES
+            # self.tilemap.debugOptions |= SHOW_COLLISION
         else:
             self.tilemap = TileMap(self)
 

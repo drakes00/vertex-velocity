@@ -12,14 +12,87 @@ GRAVITY_ACCELERATION = 1  # Each frame, the player will accelerate down by this 
 JUMP_ACCELERATION = -17.2  # When the player jumps, it will accelerate up by this quantity.
 
 
-class PhysicsEntity:
+class Entity:
+    """Base class for all entities in the game."""
+
     def __init__(self, game, tilemap, eType, pos, size):
+        """Initialize an entity.
+        Args:
+            game (Game): The game instance.
+            tilemap (TileMap): The tilemap instance.
+            eType (str): The type of the entity (e.g., "player", "brick", "spike").
+            pos (tuple): The initial position of the entity (x, y).
+            size (tuple): The size of the entity (width, height).
+        """
+
         self.game = game
         self.tilemap = tilemap
         self.eType = eType
-        self.mask = pygame.mask.from_surface(self.game.assets[eType])
         self.pos = list(pos)
         self.size = size
+        self.mask = pygame.mask.from_surface(self.game.assets[eType])
+        self.rotation = 0
+
+    @property
+    def x(self):
+        """Get the x-coordinate of the entity."""
+
+        return self.pos[0]
+
+    @property
+    def y(self):
+        """Get the y-coordinate of the entity."""
+
+        return self.pos[1]
+
+    @property
+    def rect(self):
+        """Get the pygame rectangle representing the entity's position and size."""
+
+        return pygame.Rect(self.x, self.y, self.size[0], self.size[1])
+
+    @property
+    def center(self):
+        """Get the center position of the entity."""
+
+        return (self.x + self.size[0] // 2, self.y + self.size[1] // 2)
+
+    def render(self, surface, scroll):
+        """Render the entity on the screen.
+        Args:
+            surface (pygame.Surface): The surface to render the player on.
+            scroll (list): The scroll offset for rendering.
+        """
+
+        entityIcon = pygame.transform.rotate(self.game.assets[self.eType], self.rotation)
+        surface.blit(entityIcon, (self.x - scroll[0], self.y - scroll[1]))
+
+
+class AliveEntity:
+    """Class managing the liveness traits of an entity."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.entityState = "alive"
+
+    @property
+    def isDying(self):
+        """Check if the entity is in the dying state."""
+
+        return self.entityState == "dying"
+
+    @property
+    def isDead(self):
+        """Check if the entity is dead."""
+
+        return self.entityState == "dead"
+
+
+class PhysicsEntity:
+    """Class managing the physics traits of an entity."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.velocity = [0, 0]
         self.rotation = 0
         self.collisions = {
@@ -28,46 +101,13 @@ class PhysicsEntity:
             "left": False,
             "right": False
         }
-        self.entityState = "alive"
-
-    def __repr__(self):
-        return f"PhysicsEntity(type={self.eType}, pos={self.pos}, size={self.size}, velocity={self.velocity})"
-
-    @property
-    def x(self):
-        """Return the x-coordinate of the entity."""
-        return self.pos[0]
-
-    @property
-    def y(self):
-        """Return the y-coordinate of the entity."""
-        return self.pos[1]
-
-    @property
-    def rect(self):
-        """Return the rectangle representing the entity."""
-        return pygame.Rect(self.x, self.y, self.size[0], self.size[1])
-
-    @property
-    def center(self):
-        """Return the center of the entity."""
-        return (self.x + self.size[0] // 2, self.y + self.size[1] // 2)
-
-    @property
-    def isDying(self):
-        """Check if the player is dying."""
-        return self.entityState == "dying"
-
-    @property
-    def isDead(self):
-        """Check if the player is dead."""
-        return self.entityState == "dead"
 
     def getPossibleCollisions(self):
         """Handle the collisions with player.
         Returns:
             list: List of possible collisions with tiles.
         """
+
         ret = []
 
         # Iterate over the tiles around the player.
@@ -110,6 +150,7 @@ class PhysicsEntity:
 
     def resetCollisions(self):
         """Reset the collisions."""
+
         self.tilemap.resetCollisions()
         self.collisions = {
             "up": False,
@@ -252,54 +293,41 @@ class PhysicsEntity:
         return collisionOccurred
 
     def update(self, LRmovement=0, TDmovement=0):
-        """Update player position.
+        """Update the entity's position based on its velocity and handle collisions.
         Args:
-            LRmovement (int): Left/Right movement.
-            TDmovement (int): Up/Down movement.
+            LRmovement (int): Horizontal movement input in pixels (left/right).
+            TDmovement (int): Vertical movement input in pixels (up/down).
         """
 
-        # Detect if player fells off the screen.
         if self.y > self.game.SCREEN_HEIGHT:
             self.entityState = "dying"
             return
 
-        # Compute the movement for the frame using current velocity and input.
         frame_movement = [LRmovement + self.velocity[0], TDmovement + self.velocity[1]]
+        self.pos = [self.x + frame_movement[0], self.y + frame_movement[1]]
 
-        # Apply the movement to the player.
-        self.pos = [
-            self.x + frame_movement[0],
-            self.y + frame_movement[1],
-        ]
+        self.resetCollisions()
+        self.handleCollisions()
 
-        # Handle collisions with the player.
-        collisionOccured = self.handleCollisions()
-
-        # Compute velocity for next frame.
         if self.collisions["down"] or self.collisions["up"]:
-            # If the player is on the ground or hitting the ceiling, reset the vertical velocity.
             self.velocity[1] = 0
         else:
-            # Apply gravity.
             self.velocity[1] = min(MAX_VERTICAL_VELOCITY, self.velocity[1] + GRAVITY_ACCELERATION)
 
-    def render(self, surface, scroll):
-        """Render the player on the screen.
+
+class Player(AliveEntity, PhysicsEntity, Entity):
+    """Class representing the player in the game."""
+
+    def __init__(self, game, tilemap, pos, size, debugOptions=0):
+        """Initialize the player.
         Args:
-            surface (pygame.Surface): The surface to render the player on.
-            scroll (list): The scroll offset for rendering.
+            game (Game): The game instance.
+            tilemap (TileMap): The tilemap instance.
+            pos (tuple): The initial position of the player (x, y).
+            size (tuple): The size of the player (width, height).
+            debugOptions (int): Debug options for rendering.
         """
 
-        # Rotate the entity icon based on the rotation attribute.
-        entityIcon = pygame.transform.rotate(self.game.assets[self.eType], self.rotation)
-
-        # Draw the entity icon.
-        surface.blit(entityIcon, (self.x - scroll[0], self.y - scroll[1]))
-
-
-class Player(PhysicsEntity):
-    """Class representing the player in the game."""
-    def __init__(self, game, tilemap, pos, size, debugOptions=0):
         super().__init__(game, tilemap, "player", pos, size)
         self.movementDust = []
         self.deathDust = []
@@ -310,7 +338,11 @@ class Player(PhysicsEntity):
         return f"Player(pos={self.pos}, size={self.size}, velocity={self.velocity}, dust={len(self.movementDust)}, collisions={self.collisions}, entityState={self.entityState})"
 
     def update(self, jump=False):
-        """Update player position."""
+        """Update player position.
+        Args:
+            jump (bool): Whether the player should jump.
+        """
+
         # Check if the player is dead.
         if self.entityState != "alive":
             return
@@ -342,7 +374,11 @@ class Player(PhysicsEntity):
                 self.movementDust.remove(dust)
 
     def render(self, surface, scroll):
-        """Render the player on the screen."""
+        """Render the player on the screen.
+        Args:
+            surface (pygame.Surface): The surface to render the player on.
+            scroll (list): The scroll offset for rendering.
+        """
 
         # Check if the entity is dead.
         if self.entityState == "alive":
@@ -356,7 +392,12 @@ class Player(PhysicsEntity):
             self.renderDeathAnimation(surface, scroll)
 
     def renderDeathAnimation(self, surface, scroll):
-        """Render the death animation."""
+        """Render the death animation.
+        Args:
+            surface (pygame.Surface): The surface to render the death animation on.
+            scroll (list): The scroll offset for rendering.
+        """
+
         self.movementDust = []
 
         if not self.deathDust:
