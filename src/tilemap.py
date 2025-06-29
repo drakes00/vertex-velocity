@@ -151,7 +151,7 @@ class TileMap:
         Returns:
             bool: True if the tile is deadly, False otherwise.
         """
-        return tile["type"] == "triangle"
+        return tile["type"] == "spike"
 
     def tileBoundingBox(self, tile):
         """Get the bounding box of a tile.

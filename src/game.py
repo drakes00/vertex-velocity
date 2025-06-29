@@ -7,10 +7,10 @@ import sys
 import pygame
 
 from entities import Player
+from tilemap import TileMap
 from utils import load_image
 from utils import SHOW_GRID, SHOW_COORDINATES, SHOW_COLLISION
 from utils import HIDE_PARTICLES
-from tilemap import TileMap
 
 # Set up log level.
 # logging.basicConfig(level=logging.DEBUG)
@@ -41,7 +41,7 @@ class Game:
             "background": load_image("background.png"),
             "player": load_image("player.png"),
             "brick": load_image("brick.png"),
-            "triangle": load_image("triangle.png"),
+            "spike": load_image("spike.png"),
         }
 
         if self.inputTilemap:

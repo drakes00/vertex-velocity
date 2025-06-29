@@ -36,7 +36,7 @@ class LevelEditor:
 
         self.assets = {
             "brick": load_image("brick.png"),
-            "triangle": load_image("triangle.png"),
+            "spike": load_image("spike.png"),
         }
         self.existingTiles = list(self.assets.keys())
 
