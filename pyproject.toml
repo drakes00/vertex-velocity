@@ -12,6 +12,7 @@ pygame = "^2.6.1"
 
 [tool.poetry.group.dev.dependencies]
 ward = "^0.68.0b0"
+vulture = "^2.14"
 
 [build-system]
 requires = ["poetry-core"]
