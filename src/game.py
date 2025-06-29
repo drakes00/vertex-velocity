@@ -57,7 +57,7 @@ class Game:
             "right": False
         }
         self.player = Player(self, self.tilemap, self.PLAYER_INIT_POS, self.PLAYER_SIZE)
-        self.scroll = [0, 0]
+        self.scroll = list(self.PLAYER_INIT_POS)
 
     def processInputs(self):
         """Process the user inputs."""
