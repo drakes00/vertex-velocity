@@ -7,10 +7,10 @@ import sys
 
 import pygame
 
-from entities import PhysicsEntity
-from utils import load_image
-from utils import SHOW_GRID, SHOW_COORDINATES
-from tilemap import TileMap
+from vertex_velocity.entities import PhysicsEntity
+from vertex_velocity.utils import load_image
+from vertex_velocity.utils import SHOW_GRID, SHOW_COORDINATES
+from vertex_velocity.tilemap import TileMap
 
 # Set up log level.
 # logging.basicConfig(level=logging.DEBUG)

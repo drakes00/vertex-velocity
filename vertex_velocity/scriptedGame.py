@@ -7,10 +7,11 @@ import sys
 
 import pygame
 
-from game import Game
+from vertex_velocity.game import Game
 
 
 class ScriptedGame(Game):
+
     def __init__(self, inputTilemap, inputScriptPath=None, outputScriptPath=None):
         """Initialize the scripted game.
         Args:

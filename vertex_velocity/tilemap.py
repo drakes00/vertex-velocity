@@ -3,25 +3,17 @@
 import json
 import pygame
 
-from utils import SHOW_COORDINATES, SHOW_GRID, SHOW_COLLISION
+from vertex_velocity.utils import SHOW_COORDINATES, SHOW_GRID, SHOW_COLLISION
 
 NEIGHBORS_OFFSETS = {
-    "right": (1,
-              0),
-    "down": (0,
-             1),
-    "left": (-1,
-             0),
-    "up": (0,
-           -1),
-    "right-down": (1,
-                   1),
-    "right-up": (1,
-                 -1),
-    "left-down": (-1,
-                  1),
-    "left-up": (-1,
-                -1),
+    "right": (1, 0),
+    "down": (0, 1),
+    "left": (-1, 0),
+    "up": (0, -1),
+    "right-down": (1, 1),
+    "right-up": (1, -1),
+    "left-down": (-1, 1),
+    "left-up": (-1, -1),
 }  # Purposely sorting tiles from the closest to the farthest.
 
 
@@ -128,8 +120,9 @@ class TileMap:
             dict: The tile at the position.
         """
 
+        tilePos = (int(pos[0] // self.tileSize), int(pos[1] // self.tileSize))
         try:
-            return self.tilemap[f"{pos[0]};{pos[1]}"]
+            return self.tilemap[f"{tilePos[0]};{tilePos[1]}"]
         except KeyError:
             return None
 
@@ -210,18 +203,14 @@ class TileMap:
                     tile = self.tilemap[tileToCheck]
                     surface.blit(
                         self.game.assets[tile["type"]],
-                        (tile["pos"][0] * self.tileSize - scroll[0],
-                         tile["pos"][1] * self.tileSize - scroll[1])
+                        (tile["pos"][0] * self.tileSize - scroll[0], tile["pos"][1] * self.tileSize - scroll[1])
                     )
 
                 if self.debugOptions & SHOW_GRID:
                     pygame.draw.rect(
                         surface,
                         (255, 255, 255),  # White for grid lines.
-                        (x * self.tileSize - scroll[0],
-                         y * self.tileSize - scroll[1],
-                         self.tileSize,
-                         self.tileSize),
+                        (x * self.tileSize - scroll[0], y * self.tileSize - scroll[1], self.tileSize, self.tileSize),
                         1,  # Thickness of the grid lines.
                     )
 
@@ -229,10 +218,7 @@ class TileMap:
                     pygame.draw.rect(
                         surface,
                         (255, 0, 0),  # Red for colliding tiles.
-                        (x * self.tileSize - scroll[0],
-                         y * self.tileSize - scroll[1],
-                         self.tileSize,
-                         self.tileSize),
+                        (x * self.tileSize - scroll[0], y * self.tileSize - scroll[1], self.tileSize, self.tileSize),
                         10,  # Thickness of the grid lines.
                     )
 

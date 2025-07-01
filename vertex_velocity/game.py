@@ -6,11 +6,11 @@ import sys
 
 import pygame
 
-from entities import Player
-from tilemap import TileMap
-from utils import load_image
-from utils import SHOW_GRID, SHOW_COORDINATES, SHOW_COLLISION
-from utils import HIDE_PARTICLES
+from vertex_velocity.entities import Player
+from vertex_velocity.tilemap import TileMap
+from vertex_velocity.utils import load_image
+from vertex_velocity.utils import SHOW_GRID, SHOW_COORDINATES, SHOW_COLLISION
+from vertex_velocity.utils import HIDE_PARTICLES
 
 # Set up log level.
 # logging.basicConfig(level=logging.DEBUG)

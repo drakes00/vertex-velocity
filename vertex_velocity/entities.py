@@ -4,8 +4,8 @@ import logging
 
 import pygame
 
-from particles import Dust
-from utils import HIDE_PARTICLES
+from vertex_velocity.particles import Dust
+from vertex_velocity.utils import HIDE_PARTICLES
 
 MAX_VERTICAL_VELOCITY = 80  # Maximum number of pixels per frame.
 GRAVITY_ACCELERATION = 1  # Each frame, the player will accelerate down by this quantity.
@@ -128,16 +128,21 @@ class OpaqueEntity:
             if self.tilemap.isTileSolid(tile):
                 ret += [
                     {
-                        "type": "solid",  # Collision with a solid tile, prevents movement.
-                        "bbox": self.tilemap.tileBoundingBox(tile),
-                        "rect": pygame.Rect(
-                            tile["pos"][0] * self.tilemap.tileSize,
-                            tile["pos"][1] * self.tilemap.tileSize,
-                            self.tilemap.tileSize,
-                            self.tilemap.tileSize,
-                        ),
-                        "tilepos": tile["pos"],
-                        "relpos": tileRelPos,
+                        "type":
+                            "solid",  # Collision with a solid tile, prevents movement.
+                        "bbox":
+                            self.tilemap.tileBoundingBox(tile),
+                        "rect":
+                            pygame.Rect(
+                                tile["pos"][0] * self.tilemap.tileSize,
+                                tile["pos"][1] * self.tilemap.tileSize,
+                                self.tilemap.tileSize,
+                                self.tilemap.tileSize,
+                            ),
+                        "tilepos":
+                            tile["pos"],
+                        "relpos":
+                            tileRelPos,
                     }
                 ]
             # Check if the tile is deadly.
@@ -145,16 +150,21 @@ class OpaqueEntity:
                 self.tilemap.tileBoundingBox(tile)
                 ret += [
                     {
-                        "type": "deadly",  # Collision with a deadly tile, will kill player.
-                        "bbox": self.tilemap.tileBoundingBox(tile),
-                        "rect": pygame.Rect(
-                            tile["pos"][0] * self.tilemap.tileSize,
-                            tile["pos"][1] * self.tilemap.tileSize,
-                            self.tilemap.tileSize,
-                            self.tilemap.tileSize,
-                        ),
-                        "tilepos": tile["pos"],
-                        "relpos": tileRelPos,
+                        "type":
+                            "deadly",  # Collision with a deadly tile, will kill player.
+                        "bbox":
+                            self.tilemap.tileBoundingBox(tile),
+                        "rect":
+                            pygame.Rect(
+                                tile["pos"][0] * self.tilemap.tileSize,
+                                tile["pos"][1] * self.tilemap.tileSize,
+                                self.tilemap.tileSize,
+                                self.tilemap.tileSize,
+                            ),
+                        "tilepos":
+                            tile["pos"],
+                        "relpos":
+                            tileRelPos,
                     }
                 ]
 
