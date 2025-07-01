@@ -126,7 +126,7 @@ class TileMap:
         except KeyError:
             return None
 
-    def tilesAroud(self, pos):
+    def tilesAround(self, pos):
         """Get the tiles around a position.
         Args:
             pos (tuple): The position to check from.

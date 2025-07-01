@@ -10,7 +10,7 @@ SHOW_COLLISION = 4
 # Debug options for player rendering
 HIDE_PARTICLES = 1
 
-BASE_PATH = "src/assets/images"
+BASE_PATH = "vertex_velocity/assets/images"
 
 
 def load_image(path):

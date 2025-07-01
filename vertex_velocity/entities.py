@@ -106,7 +106,7 @@ class OpaqueEntity:
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.velocity = [0, 0]
+        self.velocity = [0, GRAVITY_ACCELERATION]  # Initial vertical velocity due to gravity.
         self.collisions = {
             "up": False,
             "down": False,
@@ -123,7 +123,7 @@ class OpaqueEntity:
         ret = []
 
         # Iterate over the tiles around the player.
-        for tileRelPos, tile in self.tilemap.tilesAroud(self.pos):
+        for tileRelPos, tile in self.tilemap.tilesAround(self.pos):
             # Check if the tile is solid.
             if self.tilemap.isTileSolid(tile):
                 ret += [
@@ -348,7 +348,7 @@ class PhysicsEntity:
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.velocity = [0, 0]
+        self.velocity = [0, GRAVITY_ACCELERATION]  # Initial vertical velocity due to gravity.
 
     def update(self, LRmovement=0, TDmovement=0):
         """Update the entity's position based on its velocity and handle collisions.
