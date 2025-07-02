@@ -1,5 +1,8 @@
 # Vertex Velocity
 
+![](https://github.com/drakes00/vertex-velocity/actions/workflows/lint.yaml/badge.svg)
+![](https://github.com/drakes00/vertex-velocity/actions/workflows/ward.yaml/badge.svg)
+
 ## A Geometry Dash Recreation for Reinforcement Learning
 
 This project is a simple recreation of the popular rhythm-based platformer, Geometry Dash. The primary goal of this project is to train a reinforcement learning (RL) based AI to play the game from scratch.
