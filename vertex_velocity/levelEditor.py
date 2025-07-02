@@ -1,13 +1,11 @@
 """Level Editor for Vertex Velocity."""
 
 import argparse
-import logging
 import os
 import sys
 
 import pygame
 
-from vertex_velocity.entities import PhysicsEntity
 from vertex_velocity.utils import load_image
 from vertex_velocity.utils import SHOW_GRID, SHOW_COORDINATES
 from vertex_velocity.tilemap import TileMap
@@ -17,6 +15,8 @@ from vertex_velocity.tilemap import TileMap
 
 
 class LevelEditor:
+    """A level editor for Vertex Velocity."""
+
     SCREEN_WIDTH = 2560
     SCREEN_HEIGHT = 1440
     FPS = 60
@@ -148,6 +148,7 @@ class LevelEditor:
         pygame.display.update()
 
     def run(self):
+        """Run the game."""
         while True:
             self.processInputs()
             self.update()
@@ -157,7 +158,10 @@ class LevelEditor:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Vertex Velocity's Level Editor",)
+    """Main function to run the level editor."""
+    parser = argparse.ArgumentParser(
+        description="Vertex Velocity's Level Editor",
+    )
     parser.add_argument("-i", "--input", type=str, help="Input file name")
     args = parser.parse_args()
 

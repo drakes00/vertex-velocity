@@ -1,16 +1,16 @@
 """Tests for the entities module."""
 
-import pygame
-
 from unittest.mock import MagicMock
 from ward import test, fixture
+
+import pygame
 
 from vertex_velocity import entities
 from vertex_velocity.tilemap import TileMap
 
 
 @fixture
-def game():
+def fixt_game():
     """Fixture for a mock game object."""
     pygame.init()
     game = MagicMock()
@@ -25,7 +25,7 @@ def game():
 
 
 @fixture
-def tilemap(game=game):
+def fixt_tilemap(game=fixt_game):
     """Fixture for a real TileMap, used as a testing ground."""
     tilemap = TileMap(game, tileSize=64)
     # Create a floor
@@ -41,7 +41,7 @@ def tilemap(game=game):
 
 
 @fixture
-def entity(game=game, tilemap=tilemap):
+def fixt_entity(game=fixt_game, tilemap=fixt_tilemap):
     """Fixture for a basic Entity."""
     return entities.Entity(game, tilemap, 'player', (100, 200), (10, 20))
 
@@ -56,7 +56,7 @@ class TestAliveEntity(entities.AliveEntity, entities.Entity):
 @fixture
 def alive_entity():
     """Fixture for an AliveEntity."""
-    return TestAliveEntity(game(), tilemap(), 'player', (100, 300), (64, 64))
+    return TestAliveEntity(fixt_game(), fixt_tilemap(), 'player', (100, 300), (64, 64))
 
 
 class TestOpaqueEntity(entities.OpaqueEntity, entities.Entity):
@@ -83,7 +83,7 @@ class TestCollisionEntity(entities.OpaqueEntity, entities.PhysicsEntity, entitie
 
 
 @fixture
-def collision_entity(game=game, tilemap=tilemap):
+def collision_entity(game=fixt_game, tilemap=fixt_tilemap):
     """Fixture for a test entity for collision scenarios."""
     # Initial position is in the air, away from walls
     return [
@@ -105,13 +105,14 @@ def collision_entity(game=game, tilemap=tilemap):
 
 
 @fixture
-def player(game=game, tilemap=tilemap):
+def player(game=fixt_game, tilemap=fixt_tilemap):
     """Fixture for a Player."""
     return entities.Player(game, tilemap, (100, 200), (10, 20))
 
 
 @test("Entity initialization")
-def test_01_entity_init(entity=entity, game=game, tilemap=tilemap):
+def test_01_entity_init(entity=fixt_entity, game=fixt_game, tilemap=fixt_tilemap):
+    """Entity initialization"""
     assert entity.eType == 'player'
     assert entity.pos == [100, 200]
     assert entity.size == (10, 20)
@@ -120,7 +121,8 @@ def test_01_entity_init(entity=entity, game=game, tilemap=tilemap):
 
 
 @test("Entity properties")
-def test_02_entity_properties(entity=entity):
+def test_02_entity_properties(entity=fixt_entity):
+    """Entity properties"""
     assert entity.x == 100
     assert entity.y == 200
     assert entity.rect == pygame.Rect(100, 200, 10, 20)
@@ -128,7 +130,8 @@ def test_02_entity_properties(entity=entity):
 
 
 @test("Entity render")
-def test_03_entity_render(entity=entity, game=game):
+def test_03_entity_render(entity=fixt_entity, game=fixt_game):
+    """Entity render"""
     surface = MagicMock()
     scroll = [10, 20]
     entity.render(surface, scroll)
@@ -137,6 +140,7 @@ def test_03_entity_render(entity=entity, game=game):
 
 @test("AliveEntity initial state")
 def test_04_alive_init(entity=alive_entity):
+    """AliveEntity initial state"""
     assert entity.entityState == "alive"
     assert not entity.isDying
     assert not entity.isDead
@@ -144,6 +148,7 @@ def test_04_alive_init(entity=alive_entity):
 
 @test("AliveEntity die")
 def test_05_alive_die(entity=alive_entity):
+    """AliveEntity die"""
     entity.die()
     assert entity.entityState == "dying"
     assert entity.isDying
@@ -152,13 +157,15 @@ def test_05_alive_die(entity=alive_entity):
 
 @test("AliveEntity die idempotent")
 def test_06_alive_die_idempotent(entity=alive_entity):
+    """AliveEntity die idempotent"""
     entity.die()
     entity.die()
     assert entity.entityState == "dying"
 
 
 @test("AliveEntity update dying when offscreen")
-def test_07_alive_die_offscreen(entity=alive_entity, game=game):
+def test_07_alive_die_offscreen(entity=alive_entity, game=fixt_game):
+    """AliveEntity update dying when offscreen"""
     entity.pos[1] = game.SCREEN_HEIGHT
     entity.update()
     assert entity.entityState == "alive"
@@ -170,6 +177,7 @@ def test_07_alive_die_offscreen(entity=alive_entity, game=game):
 
 @test("Collision: Entity lands on the ground")
 def test_08_collision_ground(entity=collision_entity):
+    """Collision: Entity lands on the ground"""
     opaque_entity, physics_entity = entity
 
     # First test with OpaqueEntity
@@ -231,6 +239,7 @@ def test_08_collision_ground(entity=collision_entity):
 
 @test("Collision: Entity hits the ceiling")
 def test_09_collision_ceiling(entity=collision_entity):
+    """Collision: Entity hits the ceiling"""
     opaque_entity, physics_entity = entity
 
     # First test with OpaqueEntity
@@ -293,6 +302,7 @@ def test_09_collision_ceiling(entity=collision_entity):
 
 @test("Collision: Entity hits a wall (deadly)")
 def test_10_collision_wall(entity=collision_entity):
+    """Collision: Entity hits a wall (deadly)"""
     opaque_entity, physics_entity = entity
 
     # First test with OpaqueEntity
@@ -368,6 +378,7 @@ def test_10_collision_wall(entity=collision_entity):
 
 @test("Collision: Entity starts inside a floor tile")
 def test_11_collision_inside_floor(entity=collision_entity):
+    """Collision: Entity starts inside a floor tile"""
     opaque_entity, physics_entity = entity
     # First test with OpaqueEntity
     opaque_entity.pos = [256, 577]  # Clipping 1px into the floor (tile 9, row 10)
@@ -409,6 +420,7 @@ def test_11_collision_inside_floor(entity=collision_entity):
 
 @test("Collision: Entity on seam between two blocks")
 def test_12_collision_seam(entity=collision_entity):
+    """Collision: Entity on seam between two blocks"""
     opaque_entity, physics_entity = entity
     # Position the entity so it stands on the seam of tiles (4, 10) and (5, 10)
     # Tile size is 64. Player width is 64.
@@ -472,6 +484,7 @@ def test_12_collision_seam(entity=collision_entity):
 
 @test("Collision: Entity on seam, slightly off-center")
 def test_13_collision_seam_off_center(entity=collision_entity):
+    """Collision: Entity on seam, slightly off-center"""
     opaque_entity, physics_entity = entity
     # Positioned more over the left tile (4, 10)
     # First test with OpaqueEntity
@@ -552,7 +565,7 @@ def test_13_collision_seam_off_center(entity=collision_entity):
 #
 #
 # @test("Player initialization")
-# def _(player=player, game=game, tilemap=tilemap):
+# def _(player=player, game=fixt_game, tilemap=fixt_tilemap):
 #     assert player.eType == 'player'
 #     assert player.pos == [100, 200]
 #     assert player.size == (10, 20)

@@ -5,7 +5,6 @@ import logging
 import pygame
 
 from vertex_velocity.particles import Dust
-from vertex_velocity.utils import HIDE_PARTICLES
 
 MAX_VERTICAL_VELOCITY = 80  # Maximum number of pixels per frame.
 GRAVITY_ACCELERATION = 1  # Each frame, the player will accelerate down by this quantity.
@@ -452,7 +451,7 @@ class Player(AliveEntity, OpaqueEntity, PhysicsEntity, Entity):
 
         if not self.deathDust:
             # Create dust particles at the player's position.
-            for i in range(20):
+            for _ in range(20):
                 self.deathDust.append(Dust([self.x + self.size[0] // 2, self.y + self.size[1] // 2]))
 
         # Render the dust particles.
@@ -465,3 +464,4 @@ class Player(AliveEntity, OpaqueEntity, PhysicsEntity, Entity):
                     self.entityState = "dead"
             else:
                 dust.render(surface, scroll)
+

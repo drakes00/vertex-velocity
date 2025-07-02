@@ -1,6 +1,5 @@
 """Tests for the tilemap module."""
 
-import json
 from unittest.mock import MagicMock
 
 import pygame
@@ -26,13 +25,15 @@ def mock_game():
 
 
 @fixture
-def tilemap(game=mock_game):
+def fixt_tilemap(game=mock_game):
     """Fixture for a TileMap."""
     return TileMap(game, tileSize=TILE_SIZE)
 
 
 @test("TileMap toJson and fromJson")
-def test_01_json(tilemap=tilemap, game=mock_game):
+def test_01_json(tilemap=fixt_tilemap, game=mock_game):
+    """TileMap toJson and fromJson"""
+
     tilemap.addTile([1, 2], "brick")
     tilemap.addTile([3, 4], "spike")
 
@@ -46,7 +47,8 @@ def test_01_json(tilemap=tilemap, game=mock_game):
 
 
 @test("TileMap add and remove tile")
-def test_02_add_remove(tilemap=tilemap):
+def test_02_add_remove(tilemap=fixt_tilemap):
+    """TileMap add and remove tile"""
     pos = (5, 6)
     tilemap.addTile(pos, "brick")
     assert f"{pos[0]};{pos[1]}" in tilemap.tilemap
@@ -57,7 +59,8 @@ def test_02_add_remove(tilemap=tilemap):
 
 
 @test("TileMap getTileAt")
-def test_03_get_tile(tilemap=tilemap):
+def test_03_get_tile(tilemap=fixt_tilemap):
+    """TileMap getTileAt"""
     pos = (7, 8)
     tilemap.addTile(pos, "brick")
 
@@ -80,7 +83,8 @@ def test_03_get_tile(tilemap=tilemap):
 
 
 @test("TileMap tilesAround comprehensive")
-def test_04_tiles_around(tilemap=tilemap):
+def test_04_tiles_around(tilemap=fixt_tilemap):
+    """TileMap tilesAround comprehensive"""
     center_pos = (5, 5)
 
     # Test with no tiles around
@@ -120,7 +124,8 @@ def test_04_tiles_around(tilemap=tilemap):
 
 
 @test("TileMap isTileSolid and isTileDeadly")
-def test_05_solid_deadly(tilemap=tilemap):
+def test_05_solid_deadly(tilemap=fixt_tilemap):
+    """TileMap isTileSolid and isTileDeadly"""
     solid_tile = {
         "type": "brick"
     }
@@ -141,7 +146,8 @@ def test_05_solid_deadly(tilemap=tilemap):
 
 
 @test("TileMap tileBoundingBox")
-def test_06_bounding_box(tilemap=tilemap, game=mock_game):
+def test_06_bounding_box(tilemap=fixt_tilemap):
+    """TileMap tileBoundingBox"""
     brick_tile = {
         "type": "brick"
     }
@@ -165,7 +171,8 @@ def test_06_bounding_box(tilemap=tilemap, game=mock_game):
 
 
 @test("TileMap reset and markCollision")
-def test_07_mark_collisions(tilemap=tilemap):
+def test_07_mark_collisions(tilemap=fixt_tilemap):
+    """TileMap reset and markCollision"""
     tilemap.markCollision(pygame.Rect(64, 128, 64, 64))
     assert (1, 2) in tilemap.collidingTiles
 

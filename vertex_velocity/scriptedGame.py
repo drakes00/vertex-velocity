@@ -5,12 +5,11 @@ import json
 import logging
 import sys
 
-import pygame
-
 from vertex_velocity.game import Game
 
 
 class ScriptedGame(Game):
+    """A game mode that allows for scripted runs."""
 
     def __init__(self, inputTilemap, inputScriptPath=None, outputScriptPath=None):
         """Initialize the scripted game.
@@ -35,7 +34,7 @@ class ScriptedGame(Game):
 
         # Load the input script if provided.
         if self.inputScriptPath:
-            with open(self.inputScriptPath, 'r') as f:
+            with open(self.inputScriptPath, "r", encoding="utf-8") as f:
                 self.inputScript = json.load(f)
 
             # Include input script in the output script if an output path is provided.
@@ -51,9 +50,9 @@ class ScriptedGame(Game):
         if self.inputScriptPath and int(self.currentTick) <= self.replayEndTick:
             if self.currentTick in self.inputScript:
                 # Get the inputs for the current tick.
-                for input in self.inputScript[self.currentTick]:
-                    action = input["action"]
-                    state = input["state"]
+                for command in self.inputScript[self.currentTick]:
+                    action = command["action"]
+                    state = command["state"]
                     if action in self.movement:
                         self.movement[action] = state
 
@@ -87,12 +86,13 @@ class ScriptedGame(Game):
         finally:
             if self.outputScriptPath:
                 logging.info(f"Saving output script to {self.outputScriptPath}...")
-                with open(self.outputScriptPath, 'w') as f:
+                with open(self.outputScriptPath, "w", encoding="utf-8") as f:
                     json.dump(self.outputScript, f, indent=2)
                 logging.info("Script saved successfully.")
 
 
 def main():
+    """Main function to run the scripted game."""
     parser = argparse.ArgumentParser(description="Vertex Velocity Scripted Game")
     parser.add_argument("-l", "--level", type=str, help="Level file name")
     parser.add_argument("-i", "--input-script", type=str, help="Input script file name")

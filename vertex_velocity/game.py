@@ -1,7 +1,7 @@
 """Vertex Velocity's main game file."""
 
 import argparse
-import logging
+# import logging
 import sys
 
 import pygame
@@ -9,14 +9,16 @@ import pygame
 from vertex_velocity.entities import Player
 from vertex_velocity.tilemap import TileMap
 from vertex_velocity.utils import load_image
-from vertex_velocity.utils import SHOW_GRID, SHOW_COORDINATES, SHOW_COLLISION
-from vertex_velocity.utils import HIDE_PARTICLES
+# from vertex_velocity.utils import SHOW_GRID, SHOW_COORDINATES, SHOW_COLLISION
+# from vertex_velocity.utils import HIDE_PARTICLES
 
 # Set up log level.
 # logging.basicConfig(level=logging.DEBUG)
 
 
 class Game:
+    """Main game class for Vertex Velocity."""
+
     SCREEN_WIDTH = 1280
     SCREEN_HEIGHT = 720
     FPS = 64
@@ -102,7 +104,9 @@ class Game:
         self.scroll[0] += (self.player.rect.centerx - self.SCREEN_WIDTH / 2 - self.scroll[0]) / 10
 
         # Update player's position.
-        self.player.update(self.movement["up"],)
+        self.player.update(
+            self.movement["up"],
+        )
 
         # Check player death.
         if self.player.isDead:
@@ -133,6 +137,7 @@ class Game:
 
 
 def main():
+    """Main function to start the game."""
     parser = argparse.ArgumentParser(description="Vertex Velocity")
     parser.add_argument("-l", "--level", type=str, help="Level file name")
     args = parser.parse_args()

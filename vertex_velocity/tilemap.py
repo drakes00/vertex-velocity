@@ -41,7 +41,7 @@ class TileMap:
             path (str): Destination file name.
         """
 
-        with open(path, "w+") as handle:
+        with open(path, "w+", encoding="utf-8") as handle:
             json.dump(
                 {
                     "tileSize": self.tileSize,
@@ -60,7 +60,7 @@ class TileMap:
             TileMap: The loaded tilemap.
         """
 
-        with open(path, "r") as handle:
+        with open(path, "r", encoding="utf-8") as handle:
             data = json.load(handle)
             tilemap = cls(game, data["tileSize"])
             tilemap.tilemap = data["tilemap"]
@@ -187,7 +187,7 @@ class TileMap:
         if tilePos not in self.collidingTiles:
             self.collidingTiles.append(tilePos)
 
-    def render(self, surface, scroll=[0, 0]):
+    def render(self, surface, scroll=(0, 0)):
         """Render the tilemap.
         Args:
             surface (pygame.Surface): The surface to render the tilemap on.
