@@ -301,21 +301,10 @@ class OpaqueEntity:
             # Apply the adjustments to the player.
             adjustment = adjustments[0]
 
-            # First, detect a collision with a solid tile arriving on the right will be deadly.
-            if adjustment["axis"] == 0 and adjustment["push"] < 0:
-                logging.debug(f"Entity collided with a solid tile at {self.rect} ({adjustment['push']}) on its right.")
-                try:
-                    self.die()
-                    return True
-                except AttributeError:
-                    logging.warning(f"Deadly side collision ignored (entity has no die() method): {self}")
-
-            self.pos[adjustment["axis"]] += int(adjustment["push"])
-
             # Mark that a collision occurred.
             collisionOccurred = True
 
-            # Update collision state.
+            # First, update collision state.
             if adjustment["axis"] == 0:
                 if adjustment["push"] > 0:
                     self.collisions["left"] = True
@@ -326,6 +315,18 @@ class OpaqueEntity:
                     self.collisions["up"] = True
                 else:
                     self.collisions["down"] = True
+
+            # Then, detect a collision with a solid tile arriving on the right will be deadly.
+            if adjustment["axis"] == 0 and adjustment["push"] < 0:
+                logging.debug(f"Entity collided with a solid tile at {self.rect} ({adjustment['push']}) on its right.")
+                try:
+                    self.die()
+                    return True  # Collision orrcurred since the entity is dead.
+                except AttributeError:
+                    logging.warning(f"Deadly side collision ignored (entity has no die() method): {self}")
+
+            # Finally, if we're still alive, update the position.
+            self.pos[adjustment["axis"]] += int(adjustment["push"])
 
         return collisionOccurred
 

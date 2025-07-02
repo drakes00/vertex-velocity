@@ -6,6 +6,7 @@ import pygame
 from vertex_velocity.utils import SHOW_COORDINATES, SHOW_GRID, SHOW_COLLISION
 
 NEIGHBORS_OFFSETS = {
+    "self": (0, 0),
     "right": (1, 0),
     "down": (0, 1),
     "left": (-1, 0),
