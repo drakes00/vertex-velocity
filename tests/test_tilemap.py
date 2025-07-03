@@ -161,19 +161,19 @@ def test_06_bounding_box(tilemap=fixt_tilemap):
     assert isinstance(brick_mask, pygame.mask.Mask)
     assert isinstance(spike_mask, pygame.mask.Mask)
 
-    assert brick_mask.get_size() == (64, 64)
-    assert spike_mask.get_size() == (64, 64)
+    assert brick_mask.get_size() == (TILE_SIZE, TILE_SIZE)
+    assert spike_mask.get_size() == (TILE_SIZE, TILE_SIZE)
 
     # The brick is a full square, the spike is a triangle
-    assert brick_mask.count() == 64 * 64
-    assert spike_mask.count() < 64 * 64
+    assert brick_mask.count() == TILE_SIZE * TILE_SIZE
+    assert spike_mask.count() < TILE_SIZE * TILE_SIZE
     assert spike_mask.count() > 0
 
 
 @test("TileMap reset and markCollision")
 def test_07_mark_collisions(tilemap=fixt_tilemap):
     """TileMap reset and markCollision"""
-    tilemap.markCollision(pygame.Rect(64, 128, 64, 64))
+    tilemap.markCollision(pygame.Rect(1 * TILE_SIZE, 2 * TILE_SIZE, TILE_SIZE, TILE_SIZE))
     assert (1, 2) in tilemap.collidingTiles
 
     tilemap.resetCollisions()

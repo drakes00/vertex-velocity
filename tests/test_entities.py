@@ -8,6 +8,8 @@ import pygame
 from vertex_velocity import entities
 from vertex_velocity.tilemap import TileMap
 
+TILE_SIZE = 64  # Assuming a tile size of 64 pixels
+
 
 @fixture
 def fixt_game():
@@ -15,9 +17,9 @@ def fixt_game():
     pygame.init()
     game = MagicMock()
     game.assets = {
-        'player': pygame.Surface((64, 64)),
-        'brick': pygame.Surface((64, 64)),
-        'spike': pygame.Surface((64, 64)),
+        'player': pygame.Surface((TILE_SIZE, TILE_SIZE)),
+        'brick': pygame.Surface((TILE_SIZE, TILE_SIZE)),
+        'spike': pygame.Surface((TILE_SIZE, TILE_SIZE)),
     }
     game.SCREEN_HEIGHT = 600
     game.currentTick = 0
@@ -27,7 +29,7 @@ def fixt_game():
 @fixture
 def fixt_tilemap(game=fixt_game):
     """Fixture for a real TileMap, used as a testing ground."""
-    tilemap = TileMap(game, tileSize=64)
+    tilemap = TileMap(game, tileSize=TILE_SIZE)
     # Create a floor
     for i in range(15):
         tilemap.addTile((i, 10), "brick")
@@ -43,7 +45,7 @@ def fixt_tilemap(game=fixt_game):
 @fixture
 def fixt_entity(game=fixt_game, tilemap=fixt_tilemap):
     """Fixture for a basic Entity."""
-    return entities.Entity(game, tilemap, 'player', (100, 200), (10, 20))
+    return entities.Entity(game, tilemap, 'player', (0, 0), (TILE_SIZE, TILE_SIZE))
 
 
 class TestAliveEntity(entities.AliveEntity, entities.Entity):
@@ -56,7 +58,7 @@ class TestAliveEntity(entities.AliveEntity, entities.Entity):
 @fixture
 def alive_entity():
     """Fixture for an AliveEntity."""
-    return TestAliveEntity(fixt_game(), fixt_tilemap(), 'player', (100, 300), (64, 64))
+    return TestAliveEntity(fixt_game(), fixt_tilemap(), 'player', (0, 0), (TILE_SIZE, TILE_SIZE))
 
 
 class TestOpaqueEntity(entities.OpaqueEntity, entities.Entity):
@@ -92,14 +94,14 @@ def collision_entity(game=fixt_game, tilemap=fixt_tilemap):
             tilemap,
             "player",
             (0, 0),
-            (64, 64),
+            (TILE_SIZE, TILE_SIZE),
         ),
         TestCollisionEntity(
             game,
             tilemap,
             "player",
             (0, 0),
-            (64, 64),
+            (TILE_SIZE, TILE_SIZE),
         )
     ]
 
@@ -107,15 +109,15 @@ def collision_entity(game=fixt_game, tilemap=fixt_tilemap):
 @fixture
 def player(game=fixt_game, tilemap=fixt_tilemap):
     """Fixture for a Player."""
-    return entities.Player(game, tilemap, (100, 200), (10, 20))
+    return entities.Player(game, tilemap, (0, 0), (TILE_SIZE, TILE_SIZE))
 
 
 @test("Entity initialization")
 def test_01_entity_init(entity=fixt_entity, game=fixt_game, tilemap=fixt_tilemap):
     """Entity initialization"""
     assert entity.eType == 'player'
-    assert entity.pos == [100, 200]
-    assert entity.size == (10, 20)
+    assert entity.pos == [0, 0]
+    assert entity.size == (TILE_SIZE, TILE_SIZE)
     assert entity.game is game
     assert entity.tilemap is tilemap
 
@@ -123,19 +125,21 @@ def test_01_entity_init(entity=fixt_entity, game=fixt_game, tilemap=fixt_tilemap
 @test("Entity properties")
 def test_02_entity_properties(entity=fixt_entity):
     """Entity properties"""
+    entity.pos = [100, 200]
     assert entity.x == 100
     assert entity.y == 200
-    assert entity.rect == pygame.Rect(100, 200, 10, 20)
-    assert entity.center == (105, 210)
+    assert entity.rect == pygame.Rect(100, 200, TILE_SIZE, TILE_SIZE)
+    assert entity.center == (100 + TILE_SIZE//2, 200 + TILE_SIZE//2)
 
 
 @test("Entity render")
 def test_03_entity_render(entity=fixt_entity, game=fixt_game):
     """Entity render"""
     surface = MagicMock()
-    scroll = [10, 20]
+    scroll = [TILE_SIZE, TILE_SIZE]
+    entity.pos = [100, 200]
     entity.render(surface, scroll)
-    surface.blit.assert_called_once_with(game.assets['player'], (90, 180))
+    surface.blit.assert_called_once_with(game.assets['player'], (100 - TILE_SIZE, 200 - TILE_SIZE))
 
 
 @test("AliveEntity initial state")
@@ -181,7 +185,7 @@ def test_08_collision_ground(entity=collision_entity):
     opaque_entity, physics_entity = entity
 
     # First test with OpaqueEntity
-    opaque_entity.pos = [256, 576]  # Positioned right above the floor
+    opaque_entity.pos = [4 * TILE_SIZE, 9 * TILE_SIZE]  # Positioned right above the floor
     opaque_entity.resetCollisions()  # Reset collisions before testing
     collided = opaque_entity.handleCollisions()
     assert not collided  # Should not collide yet
@@ -190,7 +194,7 @@ def test_08_collision_ground(entity=collision_entity):
     assert not opaque_entity.collisions["left"]
     assert not opaque_entity.collisions["right"]
 
-    opaque_entity.pos = [256, 576]  # Positioned right above the floor
+    opaque_entity.pos = [4 * TILE_SIZE, 9 * TILE_SIZE]  # Positioned right above the floor
     opaque_entity.pos[1] += 1  # Move down by 1px to touch the floor
     opaque_entity.resetCollisions()
     collided = opaque_entity.handleCollisions()
@@ -199,10 +203,10 @@ def test_08_collision_ground(entity=collision_entity):
     assert not opaque_entity.collisions["up"]
     assert not opaque_entity.collisions["left"]
     assert not opaque_entity.collisions["right"]
-    assert opaque_entity.pos[1] == 576  # Should be pushed back up
+    assert opaque_entity.pos[1] == 9 * TILE_SIZE  # Should be pushed back up
 
     # Now test with CollisionEntity affected by physics
-    physics_entity.pos = [256, 576]  # Positioned right above the floor
+    physics_entity.pos = [4 * TILE_SIZE, 9 * TILE_SIZE]  # Positioned right above the floor
     physics_entity.resetCollisions()
     collided = physics_entity.handleCollisions()
     assert not collided  # Should not collide yet
@@ -224,9 +228,9 @@ def test_08_collision_ground(entity=collision_entity):
     assert not physics_entity.collisions["left"]
     assert not physics_entity.collisions["right"]
     assert physics_entity.velocity[1] != 0  # Should still be moving down since we didn't call update
-    assert physics_entity.pos[1] == 576  # Should be pushed back up
+    assert physics_entity.pos[1] == 9 * TILE_SIZE  # Should be pushed back up
 
-    physics_entity.pos = [256, 576]  # Positioned right above the floor
+    physics_entity.pos = [4 * TILE_SIZE, 9 * TILE_SIZE]  # Positioned right above the floor
     physics_entity.resetCollisions()
     physics_entity.update()  # Update entity state (should change position due to physics AND collide)
     assert physics_entity.collisions["down"]
@@ -234,7 +238,7 @@ def test_08_collision_ground(entity=collision_entity):
     assert not physics_entity.collisions["left"]
     assert not physics_entity.collisions["right"]
     assert physics_entity.velocity[1] == 0  # Should stop moving down
-    assert physics_entity.pos[1] == 576  # Should be pushed back up
+    assert physics_entity.pos[1] == 9 * TILE_SIZE  # Should be pushed back up
 
 
 @test("Collision: Entity hits the ceiling")
@@ -243,7 +247,7 @@ def test_09_collision_ceiling(entity=collision_entity):
     opaque_entity, physics_entity = entity
 
     # First test with OpaqueEntity
-    opaque_entity.pos = [256, 704]  # Positioned right under the ceiling
+    opaque_entity.pos = [4 * TILE_SIZE, 11 * TILE_SIZE]  # Positioned right under the ceiling
     opaque_entity.resetCollisions()
     collided = opaque_entity.handleCollisions()
     assert not collided  # Should not collide yet
@@ -252,7 +256,7 @@ def test_09_collision_ceiling(entity=collision_entity):
     assert not opaque_entity.collisions["left"]
     assert not opaque_entity.collisions["right"]
 
-    opaque_entity.pos = [256, 704]  # Positioned right under the ceiling
+    opaque_entity.pos = [4 * TILE_SIZE, 11 * TILE_SIZE]  # Positioned right under the ceiling
     opaque_entity.pos[1] -= 1  # Move up by 1px to touch the ceiling
     opaque_entity.resetCollisions()
     collided = opaque_entity.handleCollisions()
@@ -261,10 +265,10 @@ def test_09_collision_ceiling(entity=collision_entity):
     assert not opaque_entity.collisions["down"]
     assert not opaque_entity.collisions["left"]
     assert not opaque_entity.collisions["right"]
-    assert opaque_entity.pos[1] == 704  # Should be pushed back down
+    assert opaque_entity.pos[1] == 11 * TILE_SIZE  # Should be pushed back down
 
     # Now test with CollisionEntity affected by physics
-    physics_entity.pos = [256, 704]  # Positioned right under the ceiling
+    physics_entity.pos = [4 * TILE_SIZE, 11 * TILE_SIZE]  # Positioned right under the ceiling
     physics_entity.velocity[1] = -5  # Simulate upward movement
     physics_entity.resetCollisions()
     collided = physics_entity.handleCollisions()
@@ -287,9 +291,9 @@ def test_09_collision_ceiling(entity=collision_entity):
     assert not physics_entity.collisions["left"]
     assert not physics_entity.collisions["right"]
     assert physics_entity.velocity[1] != 0  # Should still be moving down since we didn't call update
-    assert physics_entity.pos[1] == 704  # Should be pushed back down
+    assert physics_entity.pos[1] == 11 * TILE_SIZE  # Should be pushed back down
 
-    physics_entity.pos = [256, 704]  # Positioned right under the ceiling
+    physics_entity.pos = [4 * TILE_SIZE, 11 * TILE_SIZE]  # Positioned right under the ceiling
     physics_entity.resetCollisions()
     physics_entity.update()  # Update entity state (should change position due to physics AND collide)
     assert physics_entity.collisions["up"]
@@ -297,7 +301,7 @@ def test_09_collision_ceiling(entity=collision_entity):
     assert not physics_entity.collisions["left"]
     assert not physics_entity.collisions["right"]
     assert physics_entity.velocity[1] == 0  # Should stop moving up
-    assert physics_entity.pos[1] == 704  # Should be pushed back down
+    assert physics_entity.pos[1] == 11 * TILE_SIZE  # Should be pushed back down
 
 
 @test("Collision: Entity hits a wall (deadly)")
@@ -306,7 +310,7 @@ def test_10_collision_wall(entity=collision_entity):
     opaque_entity, physics_entity = entity
 
     # First test with OpaqueEntity
-    opaque_entity.pos = [832, 320]  # Positioned 1px to the left of the wall (tile 14, row 5)
+    opaque_entity.pos = [13 * TILE_SIZE, 3 * TILE_SIZE]  # Positioned 1px to the left of the wall (tile 14, row 5)
     opaque_entity.die = MagicMock()
     opaque_entity.resetCollisions()
     collided = opaque_entity.handleCollisions()
@@ -327,7 +331,7 @@ def test_10_collision_wall(entity=collision_entity):
     opaque_entity.die.assert_called_once()
 
     # Now test with CollisionEntity affected by physics
-    physics_entity.pos = [832, 320]  # Positioned 1px to the left of the wall
+    physics_entity.pos = [13 * TILE_SIZE, 3 * TILE_SIZE]  # Positioned 1px to the left of the wall
     physics_entity.velocity[0] = 5  # Simulate rightward movement
     physics_entity.die = MagicMock()
     physics_entity.resetCollisions()
@@ -338,7 +342,7 @@ def test_10_collision_wall(entity=collision_entity):
     assert not physics_entity.collisions["left"]
     assert not physics_entity.collisions["right"]
 
-    physics_entity.pos = [832, 320]  # Positioned 1px to the left of the wall
+    physics_entity.pos = [13 * TILE_SIZE, 3 * TILE_SIZE]  # Positioned 1px to the left of the wall
     physics_entity.velocity[0] = 5  # Simulate rightward movement
     physics_entity.die = MagicMock()
     entities.PhysicsEntity.update(physics_entity)
@@ -351,7 +355,7 @@ def test_10_collision_wall(entity=collision_entity):
     assert not physics_entity.collisions["left"]
     physics_entity.die.assert_called_once()
 
-    physics_entity.pos = [832, 320]  # Positioned 1px to the left of the wall
+    physics_entity.pos = [13 * TILE_SIZE, 3 * TILE_SIZE]  # Positioned 1px to the left of the wall
     physics_entity.die = MagicMock()
     entities.PhysicsEntity.update(
         physics_entity, LRmovement=5
@@ -365,7 +369,7 @@ def test_10_collision_wall(entity=collision_entity):
     assert not physics_entity.collisions["left"]
     physics_entity.die.assert_called_once()
 
-    physics_entity.pos = [832, 320]  # Positioned 1px to the left of the wall
+    physics_entity.pos = [13 * TILE_SIZE, 3 * TILE_SIZE]  # Positioned 1px to the left of the wall
     physics_entity.die = MagicMock()
     physics_entity.resetCollisions()
     physics_entity.update(LRmovement=5)  # Update entity state (should change position due to physics AND collide)
@@ -381,7 +385,7 @@ def test_11_collision_inside_floor(entity=collision_entity):
     """Collision: Entity starts inside a floor tile"""
     opaque_entity, physics_entity = entity
     # First test with OpaqueEntity
-    opaque_entity.pos = [256, 577]  # Clipping 1px into the floor (tile 9, row 10)
+    opaque_entity.pos = [4 * TILE_SIZE, 9*TILE_SIZE + 1]  # Clipping 1px into the floor (tile 9, row 10)
     opaque_entity.resetCollisions()
     collided = opaque_entity.handleCollisions()
     assert collided
@@ -389,10 +393,10 @@ def test_11_collision_inside_floor(entity=collision_entity):
     assert not opaque_entity.collisions["up"]
     assert not opaque_entity.collisions["left"]
     assert not opaque_entity.collisions["right"]
-    assert opaque_entity.pos[1] == 576  # Should be pushed out to the top of the tile
+    assert opaque_entity.pos[1] == 9 * TILE_SIZE  # Should be pushed out to the top of the tile
 
     # Now test with CollisionEntity affected by physics
-    physics_entity.pos = [256, 577]  # Clipping 1px into the floor
+    physics_entity.pos = [4 * TILE_SIZE, 9*TILE_SIZE + 1]  # Clipping 1px into the floor
     # Update entity state (should change position due to physics, but not collide yet)
     # Purposefully not calling `physics_entity.update()` here to only simulate
     # physics and not collisions.
@@ -405,17 +409,17 @@ def test_11_collision_inside_floor(entity=collision_entity):
     assert not physics_entity.collisions["up"]
     assert not physics_entity.collisions["left"]
     assert not physics_entity.collisions["right"]
-    assert physics_entity.pos[1] == 576  # Should be pushed out to the top of the tile
+    assert physics_entity.pos[1] == 9 * TILE_SIZE  # Should be pushed out to the top of the tile
 
     # Now test with CollisionEntity affected by physics
-    physics_entity.pos = [256, 577]  # Clipping 1px into the floor
+    physics_entity.pos = [4 * TILE_SIZE, 9*TILE_SIZE + 1]  # Clipping 1px into the floor
     physics_entity.resetCollisions()
     physics_entity.update()  # Update entity state (should change position due to physics AND collide)
     assert physics_entity.collisions["down"]
     assert not physics_entity.collisions["up"]
     assert not physics_entity.collisions["left"]
     assert not physics_entity.collisions["right"]
-    assert physics_entity.pos[1] == 576  # Should be pushed out to the top of the tile
+    assert physics_entity.pos[1] == 9 * TILE_SIZE  # Should be pushed out to the top of the tile
 
 
 @test("Collision: Entity on seam between two blocks")
@@ -424,10 +428,10 @@ def test_12_collision_seam(entity=collision_entity):
     opaque_entity, physics_entity = entity
     # Position the entity so it stands on the seam of tiles (4, 10) and (5, 10)
     # Tile size is 64. Player width is 64.
-    # Tile 4 ends at 4 * 64 + 64 = 320
-    # Tile 5 starts at 5 * 64 = 320
+    # Tile 4 ends at 4 * 64 + 64 = 3*TILE_SIZE
+    # Tile 5 starts at 5 * 64 = 3*TILE_SIZE
     # First test with OpaqueEntity
-    opaque_entity.pos = [288, 576]  # Centered on the seam, right above the ground
+    opaque_entity.pos = [4.5 * TILE_SIZE, 9 * TILE_SIZE]  # Centered on the seam, right above the ground
     opaque_entity.resetCollisions()
     collided = opaque_entity.handleCollisions()
     assert not collided
@@ -444,10 +448,10 @@ def test_12_collision_seam(entity=collision_entity):
     assert not opaque_entity.collisions["up"]
     assert not opaque_entity.collisions["left"]
     assert not opaque_entity.collisions["right"]
-    assert opaque_entity.pos[1] == 576  # Pushed back up
+    assert opaque_entity.pos[1] == 9 * TILE_SIZE  # Pushed back up
 
     # Now test with CollisionEntity affected by physics
-    physics_entity.pos = [288, 576]  # Centered on the seam, right above the ground
+    physics_entity.pos = [4.5 * TILE_SIZE, 9 * TILE_SIZE]  # Centered on the seam, right above the ground
     physics_entity.resetCollisions()
     collided = physics_entity.handleCollisions()
     assert not collided
@@ -456,7 +460,7 @@ def test_12_collision_seam(entity=collision_entity):
     assert not physics_entity.collisions["left"]
     assert not physics_entity.collisions["right"]
 
-    physics_entity.pos = [288, 576]  # Centered on the seam, right above the ground
+    physics_entity.pos = [4.5 * TILE_SIZE, 9 * TILE_SIZE]  # Centered on the seam, right above the ground
     # Update entity state (should change position due to physics, but not collide yet)
     # Purposefully not calling `physics_entity.update()` here to only simulate
     # physics and not collisions.
@@ -469,17 +473,17 @@ def test_12_collision_seam(entity=collision_entity):
     assert not physics_entity.collisions["up"]
     assert not physics_entity.collisions["left"]
     assert not physics_entity.collisions["right"]
-    assert physics_entity.pos[1] == 576  # Pushed back up
+    assert physics_entity.pos[1] == 9 * TILE_SIZE  # Pushed back up
 
     # Now test with CollisionEntity affected by physics
-    physics_entity.pos = [288, 576]  # Centered on the seam, right above the ground
+    physics_entity.pos = [4.5 * TILE_SIZE, 9 * TILE_SIZE]  # Centered on the seam, right above the ground
     physics_entity.resetCollisions()
     physics_entity.update()  # Update entity state (should change position due to physics AND collide)
     assert physics_entity.collisions["down"]
     assert not physics_entity.collisions["up"]
     assert not physics_entity.collisions["left"]
     assert not physics_entity.collisions["right"]
-    assert physics_entity.pos[1] == 576  # Should be pushed out to the top of the tile
+    assert physics_entity.pos[1] == 9 * TILE_SIZE  # Should be pushed out to the top of the tile
 
 
 @test("Collision: Entity on seam, slightly off-center")
@@ -488,7 +492,9 @@ def test_13_collision_seam_off_center(entity=collision_entity):
     opaque_entity, physics_entity = entity
     # Positioned more over the left tile (4, 10)
     # First test with OpaqueEntity
-    opaque_entity.pos = [278, 576]  # Just a little off-center on the seam, right above the ground
+    opaque_entity.pos = [
+        4.5*TILE_SIZE - 10, 9 * TILE_SIZE
+    ]  # Just a little off-center on the seam, right above the ground
     opaque_entity.resetCollisions()
     collided = opaque_entity.handleCollisions()
     assert not collided
@@ -505,10 +511,12 @@ def test_13_collision_seam_off_center(entity=collision_entity):
     assert not opaque_entity.collisions["up"]
     assert not opaque_entity.collisions["left"]
     assert not opaque_entity.collisions["right"]
-    assert opaque_entity.pos[1] == 576
+    assert opaque_entity.pos[1] == 9 * TILE_SIZE
 
     # Now test with CollisionEntity affected by physics
-    physics_entity.pos = [278, 576]  # Just a little off-center on the seam, right above the ground
+    physics_entity.pos = [
+        4.5*TILE_SIZE - 10, 9 * TILE_SIZE
+    ]  # Just a little off-center on the seam, right above the ground
     physics_entity.resetCollisions()
     collided = physics_entity.handleCollisions()
     assert not collided
@@ -517,7 +525,9 @@ def test_13_collision_seam_off_center(entity=collision_entity):
     assert not physics_entity.collisions["left"]
     assert not physics_entity.collisions["right"]
 
-    physics_entity.pos = [278, 576]  # Just a little off-center on the seam, right above the ground
+    physics_entity.pos = [
+        4.5*TILE_SIZE - 10, 9 * TILE_SIZE
+    ]  # Just a little off-center on the seam, right above the ground
     # Update entity state (should change position due to physics, but not collide yet)
     # Purposefully not calling `physics_entity.update()` here to only simulate
     # physics and not collisions.
@@ -530,17 +540,19 @@ def test_13_collision_seam_off_center(entity=collision_entity):
     assert not physics_entity.collisions["up"]
     assert not physics_entity.collisions["left"]
     assert not physics_entity.collisions["right"]
-    assert physics_entity.pos[1] == 576  # Pushed back up
+    assert physics_entity.pos[1] == 9 * TILE_SIZE  # Pushed back up
 
     # Now test with CollisionEntity affected by physics
-    physics_entity.pos = [278, 576]  # Just a little off-center on the seam, right above the ground
+    physics_entity.pos = [
+        4.5*TILE_SIZE - 10, 9 * TILE_SIZE
+    ]  # Just a little off-center on the seam, right above the ground
     physics_entity.resetCollisions()
     physics_entity.update()  # Update entity state (should change position due to physics AND collide)
     assert physics_entity.collisions["down"]
     assert not physics_entity.collisions["up"]
     assert not physics_entity.collisions["left"]
     assert not physics_entity.collisions["right"]
-    assert physics_entity.pos[1] == 576  # Should be pushed out to the top of the tile
+    assert physics_entity.pos[1] == 9 * TILE_SIZE  # Should be pushed out to the top of the tile
 
 
 # @test("PhysicsEntity update with horizontal movement")
