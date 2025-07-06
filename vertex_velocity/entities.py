@@ -212,7 +212,7 @@ class OpaqueEntity:
                 logging.debug(f"Player collided with a deadly tile at {collision['rect']} ({collision['relpos']}.")
                 try:
                     self.die()
-                    return []
+                    return True, []
                 except AttributeError:
                     logging.debug(f"Deadly collision ignored (entity has no die() method): {self}")
 
@@ -268,7 +268,7 @@ class OpaqueEntity:
                 })
 
         adjustments.sort(key=lambda adj: adj['priority'], reverse=True)
-        return adjustments
+        return adjustments != [], adjustments
 
     def handleCollisions(self):
         """Handle the collisions with player.
@@ -291,7 +291,10 @@ class OpaqueEntity:
             playerRect = self.rect
 
             # Compute the adjustments needed to correct the collisions.
-            adjustments = self.computeCollisions(playerRect)
+            collision, adjustments = self.computeCollisions(playerRect)
+
+            # Acknowledge if a collision occurred.
+            collisionOccurred = collisionOccurred or collision
 
             # If no adjustments are needed, break the loop.
             if not adjustments:
@@ -299,9 +302,6 @@ class OpaqueEntity:
 
             # Apply the adjustments to the player.
             adjustment = adjustments[0]
-
-            # Mark that a collision occurred.
-            collisionOccurred = True
 
             # First, update collision state.
             if adjustment["axis"] == 0:
@@ -464,4 +464,3 @@ class Player(AliveEntity, OpaqueEntity, PhysicsEntity, Entity):
                     self.entityState = "dead"
             else:
                 dust.render(surface, scroll)
-

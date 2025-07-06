@@ -19,3 +19,12 @@ vulture = "^2.14"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.ward]
+hook_module = ["ward_coverage"]
+
+# You can also configure ward-coverage further, for example:
+[tool.ward.plugins.coverage]
+report_type = ["term"] # Generate a terminal report
+source = ["vertex_velocity"] # Specify which directories to include in coverage
+omit = ["*test*", "**/__init__.py", "vertex_velocity/levelEditor.py", "vertex_velocity/*game.py", "vertex_velocity/*Game.py"] # Exclude test files and __init__.py

@@ -39,6 +39,8 @@ def fixt_tilemap(game=fixt_game):
     # Create a ceiling
     for i in range(15):
         tilemap.addTile((i, 0), "brick")
+    # Add some deadly tiles
+    tilemap.addTile((5, 9), "spike")
     return tilemap
 
 
@@ -84,6 +86,18 @@ class TestCollisionEntity(entities.OpaqueEntity, entities.PhysicsEntity, entitie
         entities.OpaqueEntity.update(self)
 
 
+class TestAliveCollisionEntity(TestAliveEntity, TestCollisionEntity):
+    """A concrete, testable entity that has collision and liveness."""
+
+    def __init__(self, game, tilemap, eType, pos, size):
+        super().__init__(game, tilemap, eType, pos, size)
+
+    def update(self):
+        """Override update to handle collisions."""
+        entities.OpaqueEntity.update(self)
+        entities.AliveEntity.update(self)
+
+
 @fixture
 def collision_entity(game=fixt_game, tilemap=fixt_tilemap):
     """Fixture for a test entity for collision scenarios."""
@@ -97,6 +111,13 @@ def collision_entity(game=fixt_game, tilemap=fixt_tilemap):
             (TILE_SIZE, TILE_SIZE),
         ),
         TestCollisionEntity(
+            game,
+            tilemap,
+            "player",
+            (0, 0),
+            (TILE_SIZE, TILE_SIZE),
+        ),
+        TestAliveCollisionEntity(
             game,
             tilemap,
             "player",
@@ -182,7 +203,7 @@ def test_07_alive_die_offscreen(entity=alive_entity, game=fixt_game):
 @test("Collision: Entity lands on the ground")
 def test_08_collision_ground(entity=collision_entity):
     """Collision: Entity lands on the ground"""
-    opaque_entity, physics_entity = entity
+    opaque_entity, physics_entity, _ = entity
 
     # First test with OpaqueEntity
     opaque_entity.pos = [4 * TILE_SIZE, 9 * TILE_SIZE]  # Positioned right above the floor
@@ -244,7 +265,7 @@ def test_08_collision_ground(entity=collision_entity):
 @test("Collision: Entity hits the ceiling")
 def test_09_collision_ceiling(entity=collision_entity):
     """Collision: Entity hits the ceiling"""
-    opaque_entity, physics_entity = entity
+    opaque_entity, physics_entity, _ = entity
 
     # First test with OpaqueEntity
     opaque_entity.pos = [4 * TILE_SIZE, 11 * TILE_SIZE]  # Positioned right under the ceiling
@@ -307,7 +328,7 @@ def test_09_collision_ceiling(entity=collision_entity):
 @test("Collision: Entity hits a wall (deadly)")
 def test_10_collision_wall(entity=collision_entity):
     """Collision: Entity hits a wall (deadly)"""
-    opaque_entity, physics_entity = entity
+    opaque_entity, physics_entity, _ = entity
 
     # First test with OpaqueEntity
     opaque_entity.pos = [13 * TILE_SIZE, 3 * TILE_SIZE]  # Positioned 1px to the left of the wall (tile 14, row 5)
@@ -383,7 +404,7 @@ def test_10_collision_wall(entity=collision_entity):
 @test("Collision: Entity starts inside a floor tile")
 def test_11_collision_inside_floor(entity=collision_entity):
     """Collision: Entity starts inside a floor tile"""
-    opaque_entity, physics_entity = entity
+    opaque_entity, physics_entity, _ = entity
     # First test with OpaqueEntity
     opaque_entity.pos = [4 * TILE_SIZE, 9*TILE_SIZE + 1]  # Clipping 1px into the floor (tile 9, row 10)
     opaque_entity.resetCollisions()
@@ -425,7 +446,7 @@ def test_11_collision_inside_floor(entity=collision_entity):
 @test("Collision: Entity on seam between two blocks")
 def test_12_collision_seam(entity=collision_entity):
     """Collision: Entity on seam between two blocks"""
-    opaque_entity, physics_entity = entity
+    opaque_entity, physics_entity, _ = entity
     # Position the entity so it stands on the seam of tiles (4, 10) and (5, 10)
     # Tile size is 64. Player width is 64.
     # Tile 4 ends at 4 * 64 + 64 = 3*TILE_SIZE
@@ -489,7 +510,7 @@ def test_12_collision_seam(entity=collision_entity):
 @test("Collision: Entity on seam, slightly off-center")
 def test_13_collision_seam_off_center(entity=collision_entity):
     """Collision: Entity on seam, slightly off-center"""
-    opaque_entity, physics_entity = entity
+    opaque_entity, physics_entity, _ = entity
     # Positioned more over the left tile (4, 10)
     # First test with OpaqueEntity
     opaque_entity.pos = [
@@ -555,54 +576,138 @@ def test_13_collision_seam_off_center(entity=collision_entity):
     assert physics_entity.pos[1] == 9 * TILE_SIZE  # Should be pushed out to the top of the tile
 
 
-# @test("PhysicsEntity update with horizontal movement")
-# def _(entity=physics_entity):
-#     entity.update(LRmovement=5)
-#     assert entity.pos == [105, 201]
-#     assert entity.velocity == [0, 1]
-#
-#
-# @test("PhysicsEntity update with vertical movement")
-# def _(entity=physics_entity):
-#     entity.update(TDmovement=-10)
-#     assert entity.pos == [100, 191]
-#     assert entity.velocity == [0, 1]
-#
-#
-# @test("PhysicsEntity max vertical velocity")
-# def _(entity=physics_entity):
-#     entity.velocity[1] = entities.MAX_VERTICAL_VELOCITY
-#     entity.update()
-#     assert entity.velocity[1] == entities.MAX_VERTICAL_VELOCITY
-#
-#
+@test("Collision: Entity dies on deadly tile")
+def test_14_collision_deadly_tile(entity=collision_entity):
+    """Collision: Entity dies on deadly tile"""
+    _, _, alive_collision_entity = entity
+
+    alive_collision_entity.pos = [5 * TILE_SIZE, 8 * TILE_SIZE]  # Positioned right above a deadly tile
+    alive_collision_entity.resetCollisions()
+    collided = alive_collision_entity.handleCollisions()
+    assert not collided
+    assert not alive_collision_entity.isDying
+
+    alive_collision_entity.pos[1] += 1  # Move down to touch the deadly tile
+    alive_collision_entity.resetCollisions()
+    collided = alive_collision_entity.handleCollisions()
+    assert collided
+    assert alive_collision_entity.isDying
+
+
+@test("PhysicsEntity update with horizontal movement")
+def test_15_physics_horizontal_movement(entity=collision_entity):
+    """PhysicsEntity update with horizontal movement"""
+    _, physics_entity, _ = entity
+    physics_entity.pos = [100, 200]
+    physics_entity.velocity = [0, entities.GRAVITY_ACCELERATION]
+    physics_entity.update()
+    assert physics_entity.pos == [100, 200 + entities.GRAVITY_ACCELERATION]
+    assert physics_entity.velocity == [0, entities.GRAVITY_ACCELERATION * 2]
+
+    physics_entity.pos = [100, 200]
+    physics_entity.velocity = [0, entities.GRAVITY_ACCELERATION]
+    physics_entity.update(LRmovement=5)
+    assert physics_entity.pos == [100 + 5, 200 + entities.GRAVITY_ACCELERATION]
+    assert physics_entity.velocity == [0, entities.GRAVITY_ACCELERATION * 2]
+
+    physics_entity.pos = [100, 200]
+    physics_entity.velocity = [0, entities.GRAVITY_ACCELERATION]
+    physics_entity.update(LRmovement=-5)
+    assert physics_entity.pos == [100 - 5, 200 + entities.GRAVITY_ACCELERATION]
+    assert physics_entity.velocity == [0, entities.GRAVITY_ACCELERATION * 2]
+
+
+@test("PhysicsEntity update with vertical movement")
+def test_16_physics_vertical_movement(entity=collision_entity):
+    """PhysicsEntity update with vertical movement"""
+    _, physics_entity, _ = entity
+    physics_entity.pos = [100, 200]
+    physics_entity.velocity = [0, entities.GRAVITY_ACCELERATION]
+    physics_entity.update()
+    expected_y = 200 + entities.GRAVITY_ACCELERATION
+    assert physics_entity.pos == [100, expected_y]
+    assert physics_entity.velocity == [0, entities.GRAVITY_ACCELERATION * 2]
+
+    physics_entity.pos = [100, 200]
+    physics_entity.velocity = [0, entities.GRAVITY_ACCELERATION]
+    physics_entity.update(TDmovement=10)
+    expected_y = 200 + 10 + entities.GRAVITY_ACCELERATION
+    assert physics_entity.pos == [100, expected_y]
+    assert physics_entity.velocity == [0, entities.GRAVITY_ACCELERATION * 2]
+
+    physics_entity.pos = [100, 200]
+    physics_entity.velocity = [0, entities.GRAVITY_ACCELERATION]
+    physics_entity.update(TDmovement=-10)
+    expected_y = 200 - 10 + entities.GRAVITY_ACCELERATION
+    assert physics_entity.pos == [100, expected_y]
+    assert physics_entity.velocity == [0, entities.GRAVITY_ACCELERATION * 2]
+
+
+@test("PhysicsEntity max vertical velocity")
+def test_17_physics_max_velocity(entity=collision_entity):
+    """PhysicsEntity max vertical velocity"""
+    _, physics_entity, _ = entity
+    physics_entity.velocity[1] = entities.MAX_VERTICAL_VELOCITY
+
+    physics_entity.update()
+
+    assert physics_entity.velocity[1] == entities.MAX_VERTICAL_VELOCITY
+    # TODO test with value less than MAX_VERTICAL_VELOCITY but greater then MAX_VERTICAL_VELOCITY - GRAVITY_ACCELERATION
+
+
 # @test("Player initialization")
-# def _(player=player, game=fixt_game, tilemap=fixt_tilemap):
+# def test_17_player_init(player=player, game=fixt_game, tilemap=fixt_tilemap):
+#     """Player initialization"""
 #     assert player.eType == 'player'
-#     assert player.pos == [100, 200]
-#     assert player.size == (10, 20)
+#     assert player.pos == [0, 0]
+#     assert player.size == (TILE_SIZE, TILE_SIZE)
 #     assert player.game is game
 #     assert player.tilemap is tilemap
 #     assert player.entityState == "alive"
 #
 #
 # @test("Player jump")
-# def _(player=player):
+# def test_18_player_jump(player=player):
+#     """Player jump"""
+#     player.pos = [100, 100]  # In the air
+#     player.jumpCooldown = False
+#     player.velocity = [0, 0]
+#
 #     player.update(jump=True)
-#     assert player.velocity[1] == entities.JUMP_ACCELERATION
+#
+#     assert player.velocity[1] == entities.JUMP_ACCELERATION + entities.GRAVITY_ACCELERATION
 #     assert player.jumpCooldown
 #
 #
 # @test("Player no double jump")
-# def _(player=player):
+# def test_19_player_no_double_jump(player=player):
+#     """Player no double jump"""
+#     player.pos = [100, 100]  # In the air
+#     player.jumpCooldown = False
+#     player.velocity = [0, 0]
+#
 #     player.update(jump=True)
+#     first_jump_velocity = player.velocity[1]
 #     player.update(jump=True)
-#     assert player.velocity[1] != 2 * entities.JUMP_ACCELERATION
+#     second_jump_velocity = player.velocity[1]
+#
+#     assert second_jump_velocity == first_jump_velocity + entities.GRAVITY_ACCELERATION
 #
 #
 # @test("Player jump cooldown reset")
-# def _(player=player):
+# def test_20_player_jump_cooldown_reset(player=player):
+#     """Player jump cooldown reset"""
+#     player.pos = [100, 100]  # In the air
+#     player.jumpCooldown = False
+#     player.velocity = [0, 0]
+#
+#     # 1. Jump once
 #     player.update(jump=True)
-#     player.collisions["down"] = True
+#     assert player.jumpCooldown
+#
+#     # 2. Land on the ground by setting position and updating
+#     player.pos = [4 * TILE_SIZE, 9 * TILE_SIZE]
 #     player.update()
+#
+#     # 3. Check that cooldown is reset
 #     assert not player.jumpCooldown
