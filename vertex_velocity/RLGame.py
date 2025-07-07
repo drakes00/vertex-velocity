@@ -2,6 +2,7 @@
 
 import argparse
 
+import copy
 import pygame
 
 from vertex_velocity.game import Game
@@ -31,7 +32,7 @@ class RLGame(Game):
 
         # Initialize the neural network.
         self.neuralNetwork = NeuralNetwork(
-            [
+            self, self.tilemap, [
                 Neuron(
                     self,
                     self.tilemap,
@@ -55,6 +56,8 @@ class RLGame(Game):
                 ),
             ]
         )
+        self.baseNeuralNetwork = copy.copy(self.neuralNetwork)
+        self.neuralNetwork.update()
 
     def update(self):
         """Update the game.
@@ -71,7 +74,12 @@ class RLGame(Game):
             TDmovement=5 * (self.movement["down"] - self.movement["up"]),
             gravity=False,
         )
+        # Evolve the neural network.
+        print(f"Before evolution: {self.neuralNetwork}")
+        self.neuralNetwork = self.baseNeuralNetwork.evolve()
         self.neuralNetwork.update()
+        print(f"After evolution: {self.neuralNetwork} at tick {self.currentTick}")
+        # input()
 
         # Check player death.
         if self.player.isDead:
