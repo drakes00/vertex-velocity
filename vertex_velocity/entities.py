@@ -348,7 +348,7 @@ class PhysicsEntity:
         super().__init__(*args, **kwargs)
         self.velocity = [0, GRAVITY_ACCELERATION]  # Initial vertical velocity due to gravity.
 
-    def update(self, LRmovement=0, TDmovement=0):
+    def update(self, LRmovement=0, TDmovement=0, gravity=True):
         """Update the entity's position based on its velocity and handle collisions.
         Args:
             LRmovement (int): Horizontal movement input in pixels (left/right).
@@ -357,7 +357,10 @@ class PhysicsEntity:
 
         frame_movement = [LRmovement + self.velocity[0], TDmovement + self.velocity[1]]
         self.pos = [self.x + frame_movement[0], self.y + frame_movement[1]]
-        self.velocity[1] = min(MAX_VERTICAL_VELOCITY, self.velocity[1] + GRAVITY_ACCELERATION)
+        if gravity:
+            self.velocity[1] = min(MAX_VERTICAL_VELOCITY, self.velocity[1] + GRAVITY_ACCELERATION)
+        else:
+            self.velocity[1] = 0
 
 
 class Player(AliveEntity, OpaqueEntity, PhysicsEntity, Entity):
@@ -382,11 +385,19 @@ class Player(AliveEntity, OpaqueEntity, PhysicsEntity, Entity):
     def __repr__(self):
         return f"Player(pos={self.pos}, size={self.size}, velocity={self.velocity}, dust={len(self.movementDust)}, collisions={self.collisions}, entityState={self.entityState})"
 
-    def update(self, jump=False):
+    def update(self, jump=False, LRmovement=0, TDmovement=0, forcedMovement=True, gravity=True):
         """Update player position.
         Args:
             jump (bool): Whether the player should jump.
+            LRmovement (int): Horizontal movement input in pixels (left/right).
+            TDmovement (int): Vertical movement input in pixels (up/down).
+            forcedMovement (bool): Whether to force the player's right movement.
+            gravity (bool): Whether to apply gravity to the player.
         """
+        # Prepare mouvement.
+        if forcedMovement:
+            LRmovement = 8
+            TDmovement = 0
 
         # Check if the player is dead.
         if self.entityState != "alive":
@@ -399,7 +410,7 @@ class Player(AliveEntity, OpaqueEntity, PhysicsEntity, Entity):
             logging.debug(f"Player jumped at tick {self.game.currentTick} from position {self.pos}.")
 
         AliveEntity.update(self)
-        PhysicsEntity.update(self, LRmovement=8)
+        PhysicsEntity.update(self, LRmovement=LRmovement, TDmovement=TDmovement, gravity=gravity)
         OpaqueEntity.update(self)
 
         if self.collisions["down"]:
