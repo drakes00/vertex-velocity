@@ -40,7 +40,7 @@ def fixt_tilemap(game=fixt_game):
     for i in range(15):
         tilemap.addTile((i, 0), "brick")
     # Add some deadly tiles
-    tilemap.addTile((5, 9), "spike")
+    tilemap.addTile((2, 9), "spike")
     return tilemap
 
 
@@ -581,7 +581,7 @@ def test_14_collision_deadly_tile(entity=collision_entity):
     """Collision: Entity dies on deadly tile"""
     _, _, alive_collision_entity = entity
 
-    alive_collision_entity.pos = [5 * TILE_SIZE, 8 * TILE_SIZE]  # Positioned right above a deadly tile
+    alive_collision_entity.pos = [2 * TILE_SIZE, 8 * TILE_SIZE]  # Positioned right above a deadly tile
     alive_collision_entity.resetCollisions()
     collided = alive_collision_entity.handleCollisions()
     assert not collided
@@ -655,59 +655,73 @@ def test_17_physics_max_velocity(entity=collision_entity):
     # TODO test with value less than MAX_VERTICAL_VELOCITY but greater then MAX_VERTICAL_VELOCITY - GRAVITY_ACCELERATION
 
 
-# @test("Player initialization")
-# def test_17_player_init(player=player, game=fixt_game, tilemap=fixt_tilemap):
-#     """Player initialization"""
-#     assert player.eType == 'player'
-#     assert player.pos == [0, 0]
-#     assert player.size == (TILE_SIZE, TILE_SIZE)
-#     assert player.game is game
-#     assert player.tilemap is tilemap
-#     assert player.entityState == "alive"
-#
-#
-# @test("Player jump")
-# def test_18_player_jump(player=player):
-#     """Player jump"""
-#     player.pos = [100, 100]  # In the air
-#     player.jumpCooldown = False
-#     player.velocity = [0, 0]
-#
-#     player.update(jump=True)
-#
-#     assert player.velocity[1] == entities.JUMP_ACCELERATION + entities.GRAVITY_ACCELERATION
-#     assert player.jumpCooldown
-#
-#
-# @test("Player no double jump")
-# def test_19_player_no_double_jump(player=player):
-#     """Player no double jump"""
-#     player.pos = [100, 100]  # In the air
-#     player.jumpCooldown = False
-#     player.velocity = [0, 0]
-#
-#     player.update(jump=True)
-#     first_jump_velocity = player.velocity[1]
-#     player.update(jump=True)
-#     second_jump_velocity = player.velocity[1]
-#
-#     assert second_jump_velocity == first_jump_velocity + entities.GRAVITY_ACCELERATION
-#
-#
-# @test("Player jump cooldown reset")
-# def test_20_player_jump_cooldown_reset(player=player):
-#     """Player jump cooldown reset"""
-#     player.pos = [100, 100]  # In the air
-#     player.jumpCooldown = False
-#     player.velocity = [0, 0]
-#
-#     # 1. Jump once
-#     player.update(jump=True)
-#     assert player.jumpCooldown
-#
-#     # 2. Land on the ground by setting position and updating
-#     player.pos = [4 * TILE_SIZE, 9 * TILE_SIZE]
-#     player.update()
-#
-#     # 3. Check that cooldown is reset
-#     assert not player.jumpCooldown
+@test("Player initialization")
+def test_18_player_init(player=player, game=fixt_game, tilemap=fixt_tilemap):
+    """Player initialization"""
+    assert player.eType == 'player'
+    assert player.pos == [0, 0]
+    assert player.size == (TILE_SIZE, TILE_SIZE)
+    assert player.game is game
+    assert player.tilemap is tilemap
+    assert player.entityState == "alive"
+
+
+@test("Player jump")
+def test_19_player_jump(player=player):
+    """Player jump"""
+    player.pos = [4 * TILE_SIZE, 9 * TILE_SIZE]  # Positioned right on the floor
+    player.update()
+    assert player.collisions["down"]  # Should be on the ground
+    assert player.velocity[1] == 0  # Should not be moving vertically
+    assert not player.jumpCooldown  # Jump cooldown should not be active
+
+    player.update(jump=True)
+
+    assert player.velocity[1] == entities.JUMP_ACCELERATION + entities.GRAVITY_ACCELERATION
+    assert player.jumpCooldown
+
+
+@test("Player no double jump")
+def test_20_player_no_double_jump(player=player):
+    """Player no double jump"""
+    player.pos = [4 * TILE_SIZE, 9 * TILE_SIZE]  # Positioned right on the floor
+    player.update()
+    assert player.collisions["down"]  # Should be on the ground
+    assert player.velocity[1] == 0  # Should not be moving vertically
+    assert not player.jumpCooldown  # Jump cooldown should not be active
+
+    player.update(jump=True)
+    assert player.jumpCooldown  # Jump cooldown should be active
+    first_jump_velocity = player.velocity[1]
+    assert first_jump_velocity == entities.JUMP_ACCELERATION + entities.GRAVITY_ACCELERATION
+
+    player.update(jump=True)
+    second_jump_velocity = player.velocity[1]
+    assert player.jumpCooldown  # Jump cooldown should be active
+    assert second_jump_velocity == first_jump_velocity + entities.GRAVITY_ACCELERATION
+    assert second_jump_velocity != entities.JUMP_ACCELERATION + entities.GRAVITY_ACCELERATION
+
+
+@test("Player jump cooldown reset")
+def test_21_player_jump_cooldown_reset(player=player):
+    """Player jump cooldown reset"""
+    player.pos = [4 * TILE_SIZE, 9 * TILE_SIZE]  # Positioned right on the floor
+    player.update()
+    assert player.collisions["down"]  # Should be on the ground
+    assert player.velocity[1] == 0  # Should not be moving vertically
+    assert not player.jumpCooldown  # Jump cooldown should not be active
+
+    # 1. Jump once
+    player.update(jump=True)
+    assert player.jumpCooldown
+    assert player.pos[1] < 9 * TILE_SIZE  # Should be in the air
+
+    # 2. Land on the ground by setting position and updating
+    player.pos = [4 * TILE_SIZE, 9 * TILE_SIZE]
+    player.velocity[1] = 1  # Simulate falling down after the top of the jump
+    player.update()
+
+    # 3. Check that cooldown is reset
+    assert player.collisions["down"]  # Should be on the ground
+    assert player.velocity[1] == 0  # Should not be moving vertically
+    assert not player.jumpCooldown

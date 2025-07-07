@@ -336,9 +336,7 @@ class OpaqueEntity:
             TDmovement (int): Vertical movement input in pixels (up/down).
         """
 
-        self.resetCollisions()
         self.handleCollisions()
-
         if self.collisions["down"] or self.collisions["up"]:
             self.velocity[1] = 0
 
@@ -401,12 +399,13 @@ class Player(AliveEntity, OpaqueEntity, PhysicsEntity, Entity):
             logging.debug(f"Player jumped at tick {self.game.currentTick} from position {self.pos}.")
 
         AliveEntity.update(self)
-        OpaqueEntity.update(self)
         PhysicsEntity.update(self, LRmovement=8)
+        OpaqueEntity.update(self)
 
         if self.collisions["down"]:
             # If the player is on the ground, reset the jump cooldown.
             self.jumpCooldown = False
+            self.velocity[1] = 0  # Reset vertical velocity when on the ground.
 
         # Add dust particles when the player is moving horizontally.
         if self.collisions["down"]:  # and LRmovement > 0:
