@@ -2,6 +2,8 @@
 
 from enum import Enum
 
+import pygame
+
 from vertex_velocity.entities import Entity, OpaqueEntity
 
 
@@ -87,6 +89,7 @@ class NeuralNetwork:
             neurons (list[Neuron]): A list of Neuron objects.
         """
         self.neurons = neurons
+        self.activated = False
 
     def addNeuron(self, neuron: Neuron):
         """Add a neuron to the neural network.
@@ -106,8 +109,13 @@ class NeuralNetwork:
 
     def update(self):
         """Update the neural network state."""
+
+        # First, update all neurons in the network.
         for neuron in self.neurons:
             neuron.update()
+
+        # Then, check if all neuron is activated.
+        self.activated = all(neuron.activated for neuron in self.neurons)
 
     def render(self, surface, scroll):
         """Render the neural network on the given screen.
@@ -116,5 +124,24 @@ class NeuralNetwork:
             surface (pygame.Surface): The surface to render the player on.
             scroll (list): The scroll offset for rendering.
         """
+        # Compute network's center position as the average of all neurons' positions.
+        center_x = sum(neuron.center[0] for neuron in self.neurons) / len(self.neurons)
+        center_y = sum(neuron.center[1] for neuron in self.neurons) / len(self.neurons)
+
+        # Render the center as a white circle, empty if the network is not activated.
+        if self.activated:
+            pygame.draw.circle(surface, (255, 255, 255), (int(center_x - scroll[0]), int(center_y - scroll[1])), 20)
+        else:
+            pygame.draw.circle(surface, (100, 100, 100), (int(center_x - scroll[0]), int(center_y - scroll[1])), 20, 5)
+
+        # Render each neuron in the network.
         for neuron in self.neurons:
             neuron.render(surface, scroll)
+
+        # Render the connections between neurons and center.
+        for neuron in self.neurons:
+            pygame.draw.line(
+                surface, (255, 255, 255) if neuron.activated else (100, 100, 100),
+                (int(center_x - scroll[0]), int(center_y - scroll[1])),
+                (int(neuron.center[0] - scroll[0]), int(neuron.center[1] - scroll[1])), 2
+            )

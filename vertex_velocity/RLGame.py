@@ -50,7 +50,7 @@ class RLGame(Game):
                     self,
                     self.tilemap,
                     NeuronType.SPIKE,
-                    (250, 0),
+                    (250, 200),
                     NeuronActivation.ABSENCE,
                 ),
             ]
