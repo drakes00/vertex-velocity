@@ -284,6 +284,7 @@ class NeuralNetworkPlayer(Player):
         super().__init__(game, tilemap, pos, size)
         self.neuralNetworks = neuralNetworks
         self.activated = False
+        self.score = 0
 
     def update(self, forcedMovement=True, LRmovement=0, TDmovement=0, gravity=True):
         """Update the player based on the neural networks controlling it.
@@ -305,6 +306,9 @@ class NeuralNetworkPlayer(Player):
 
         # Call the parent class update method with the provided parameters.
         super().update(self.activated, LRmovement, TDmovement, forcedMovement, gravity)
+
+        # Set the player's score based on the number of tiles traversed.
+        self.score = self.pos[0] // self.tilemap.tileSize
 
     def render(self, surface, scroll):
         """Render the player on the given screen.
