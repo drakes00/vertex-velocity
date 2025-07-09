@@ -6,7 +6,7 @@ import copy
 import pygame
 
 from vertex_velocity.game import Game
-from vertex_velocity.neuralNetwork import NeuralNetwork, Neuron, NeuronType, NeuronActivation
+from vertex_velocity.neuralNetwork import NeuralNetworkPlayer, NeuralNetwork, Neuron, NeuronType, NeuronActivation
 from vertex_velocity.utils import load_image, tint_image
 
 
@@ -30,34 +30,39 @@ class RLGame(Game):
         self.assets["brickNeuronActivatedAbsence"] = tint_image(self.assets["brickNeuron"], (255, 0, 0))
         self.assets["spikeNeuronActivatedAbsence"] = tint_image(self.assets["spikeNeuron"], (255, 0, 0))
 
-        # Initialize the neural network.
-        self.neuralNetwork = NeuralNetwork(
-            self, self.tilemap, [
-                Neuron(
-                    self,
-                    self.tilemap,
-                    NeuronType.AIR,
-                    (400, 0),
-                    NeuronActivation.PRESENCE,
-                ),
-                Neuron(
-                    self,
-                    self.tilemap,
-                    NeuronType.BRICK,
-                    (100, 100),
-                    NeuronActivation.PRESENCE,
-                ),
-                Neuron(
-                    self,
-                    self.tilemap,
-                    NeuronType.SPIKE,
-                    (250, 200),
-                    NeuronActivation.ABSENCE,
-                ),
-            ]
+        # Initialize the player.
+        self.player = NeuralNetworkPlayer(
+            self,
+            self.tilemap,
+            self.PLAYER_INIT_POS,
+            self.PLAYER_SIZE,
+            [
+                NeuralNetwork(
+                    self, self.tilemap, [
+                    Neuron(
+                        self,
+                        self.tilemap,
+                        NeuronType.AIR,
+                        (400, 0),
+                        NeuronActivation.PRESENCE,
+                    ),
+                    Neuron(
+                        self,
+                        self.tilemap,
+                        NeuronType.BRICK,
+                        (100, 100),
+                        NeuronActivation.PRESENCE,
+                    ),
+                    Neuron(
+                        self,
+                        self.tilemap,
+                        NeuronType.SPIKE,
+                        (250, 200),
+                        NeuronActivation.ABSENCE,
+                    ),
+                ])
+            ],
         )
-        self.baseNeuralNetwork = copy.copy(self.neuralNetwork)
-        self.neuralNetwork.update()
 
     def update(self):
         """Update the game.
@@ -69,17 +74,11 @@ class RLGame(Game):
 
         # Update player's position.
         self.player.update(
-            forcedMovement=False,
-            LRmovement=5 * (self.movement["right"] - self.movement["left"]),
-            TDmovement=5 * (self.movement["down"] - self.movement["up"]),
-            gravity=False,
+            # forcedMovement=False,
+            # LRmovement=5 * (self.movement["right"] - self.movement["left"]),
+            # TDmovement=5 * (self.movement["down"] - self.movement["up"]),
+            # gravity=False,
         )
-        # Evolve the neural network.
-        print(f"Before evolution: {self.neuralNetwork}")
-        self.neuralNetwork = self.baseNeuralNetwork.evolve()
-        self.neuralNetwork.update()
-        print(f"After evolution: {self.neuralNetwork} at tick {self.currentTick}")
-        # input()
 
         # Check player death.
         if self.player.isDead:
@@ -94,8 +93,6 @@ class RLGame(Game):
         renderScroll = [int(pos) for pos in self.scroll]
         self.tilemap.render(self.screen, renderScroll)
         self.player.render(self.screen, renderScroll)
-
-        self.neuralNetwork.render(self.screen, renderScroll)
 
         pygame.display.update()
 

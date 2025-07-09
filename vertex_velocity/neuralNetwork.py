@@ -8,7 +8,7 @@ logging.basicConfig(level=logging.DEBUG)
 import pygame
 import random
 
-from vertex_velocity.entities import Entity, OpaqueEntity
+from vertex_velocity.entities import Entity, OpaqueEntity, Player
 
 # Per neuron mutation probabilities.
 PROBA_MUTATE_ACTIVATION = 0.1  # Probability of mutating a neuron's activation during evolution
@@ -266,3 +266,56 @@ class NeuralNetwork:
                     (int(center_x - scroll[0]), int(center_y - scroll[1])),
                     (int(neuron.center[0] - scroll[0]), int(neuron.center[1] - scroll[1])), 2
                 )
+
+
+class NeuralNetworkPlayer(Player):
+    """Class representing a player controlled by a neural network."""
+
+    def __init__(self, game, tilemap, pos, size, neuralNetworks: list[NeuralNetwork]):
+        """Initialize the neural network player.
+        
+        Args:
+            game (RLGame): The game instance this player belongs to.
+            tilemap (TileMap): The tilemap the player is part of.
+            pos (tuple): The (x, y) position of the player.
+            size (tuple): The size of the player.
+            neuralNetworks (list[NeuralNetwork]): A list of neural networks controlling the player.
+        """
+        super().__init__(game, tilemap, pos, size)
+        self.neuralNetworks = neuralNetworks
+        self.activated = False
+
+    def update(self, forcedMovement=True, LRmovement=0, TDmovement=0, gravity=True):
+        """Update the player based on the neural networks controlling it.
+        
+        Args:
+            forcedMovement (bool): Whether to force movement.
+            LRmovement (int): Left/Right movement value.
+            TDmovement (int): Top/Down movement value.
+            gravity (bool): Whether to apply gravity.
+        """
+        # Update each neural network controlling the player.
+        for neuralNetwork in self.neuralNetworks:
+            neuralNetwork.update()
+
+        # Check is all networks are activated.
+        if all(neuralNetwork.activated for neuralNetwork in self.neuralNetworks):
+            # If all networks are activated, set the player as activated.
+            self.activated = True
+
+        # Call the parent class update method with the provided parameters.
+        super().update(self.activated, LRmovement, TDmovement, forcedMovement, gravity)
+
+    def render(self, surface, scroll):
+        """Render the player on the given screen.
+        
+        Args:
+            surface (pygame.Surface): The surface to render the player on.
+            scroll (list): The scroll offset for rendering.
+        """
+        # Render the player using the parent class render method.
+        super().render(surface, scroll)
+
+        # Render each neural network controlling the player.
+        for neuralNetwork in self.neuralNetworks:
+            neuralNetwork.render(surface, scroll)
