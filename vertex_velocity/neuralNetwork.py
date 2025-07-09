@@ -2,9 +2,6 @@
 
 from enum import Enum
 
-import logging
-
-logging.basicConfig(level=logging.DEBUG)
 import pygame
 import random
 
@@ -22,6 +19,9 @@ PROBA_REMOVE_NEURON = 0.1  # Probability of removing a neuron during evolution
 
 PROBA_NEW_NEURON = 0.1  # Probability of creating a new neuron during evolution
 NEW_NERON_POS_RANGE = 300  # Range for the position of a new neuron during evolution
+
+PROBA_REMOVE_NETWORK = 0.05  # Probability of removing a neural network during evolution
+PROBA_NEW_NETWORK = 0.05  # Probability of creating a new neural network during evolution
 
 
 class MuatationType(Enum):
@@ -285,6 +285,35 @@ class NeuralNetworkPlayer(Player):
         self.neuralNetworks = neuralNetworks
         self.activated = False
         self.score = 0
+
+    def evolve(self):
+        """Evolve the player's neural networks to create a new player.
+        
+        Returns:
+            NeuralNetworkPlayer: A new player with evolved neural networks.
+        """
+        # Create a new list of evolved neural networks.
+        new_neuralNetworks = [neuralNetwork.evolve() for neuralNetwork in self.neuralNetworks]
+
+        # Has a small chance to remove a neural network.
+        if random.random() < PROBA_REMOVE_NETWORK and len(new_neuralNetworks) > 1:
+            # Remove a random neural network from the list.
+            removed_network = random.choice(new_neuralNetworks)
+            new_neuralNetworks.remove(removed_network)
+            logging.debug(f"Removing neural network {removed_network}")
+
+        # Has a small chance to add a new neural network.
+        if random.random() < PROBA_NEW_NETWORK:
+            # Create a new neural network with a random neuron.
+            new_neuralNetwork = NeuralNetwork(
+                self.game, self.tilemap,
+                [Neuron(self.game, self.tilemap, random.choice(list(NeuronType)), (0, 0), random.choice(list(NeuronActivation)))]
+            )
+            new_neuralNetworks.append(new_neuralNetwork)
+            logging.debug(f"Adding new neural network {new_neuralNetwork}")
+
+        # Create a new player with the evolved neural networks.
+        return NeuralNetworkPlayer(self.game, self.tilemap, self.pos, self.size, new_neuralNetworks)
 
     def update(self, forcedMovement=True, LRmovement=0, TDmovement=0, gravity=True):
         """Update the player based on the neural networks controlling it.

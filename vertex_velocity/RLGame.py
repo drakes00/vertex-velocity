@@ -19,6 +19,8 @@ class RLGame(Game):
         """
         super().__init__(inputTilemap)
 
+        self.FPS = 600
+
         # Load the neuron visual assets.
         self.assets["airNeuron"] = load_image("air_neuron.png")
         self.assets["brickNeuron"] = load_image("brick_neuron.png")
@@ -73,15 +75,11 @@ class RLGame(Game):
         self.scroll[0] += (self.player.rect.centerx - self.SCREEN_WIDTH / 2 - self.scroll[0]) / 10
 
         # Update player's position.
-        self.player.update(
-            # forcedMovement=False,
-            # LRmovement=5 * (self.movement["right"] - self.movement["left"]),
-            # TDmovement=5 * (self.movement["down"] - self.movement["up"]),
-            # gravity=False,
-        )
+        self.player.update()
 
         # Check player death.
         if self.player.isDead:
+            print("Player is dead with score:", self.player.score)
             return False
 
         return True
@@ -96,8 +94,28 @@ class RLGame(Game):
 
         pygame.display.update()
 
+    def run(self):
+        """Run the game."""
+        # Let's mesure the time.
+        timeBegin = pygame.time.get_ticks()
+
+        gameContinue = True
+        while gameContinue:
+            self.processInputs()
+            gameContinue = self.update()
+            self.render()
+
+            self.clock.tick(self.FPS)
+            self.tickCount += 1
+
+        # Let's mesure the time.
+        timeEnd = pygame.time.get_ticks()
+        print(f"Game finished in {timeEnd - timeBegin} ms with {self.tickCount} ticks.")
+
 
 def main():
+    import os
+    os.environ["SDL_VIDEODRIVER"] = "dummy"
     parser = argparse.ArgumentParser(description="Vertex Velocity, now AI powered!")
     parser.add_argument("-l", "--level", type=str, help="Level file name")
     args = parser.parse_args()
