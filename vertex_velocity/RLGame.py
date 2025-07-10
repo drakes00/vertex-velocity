@@ -1,13 +1,17 @@
 """Reinforcement Learning Game Environment playing Vertex Velocity."""
 
-import argparse
+from tqdm import tqdm
 
+import argparse
 import copy
 import pygame
 
 from vertex_velocity.game import Game
 from vertex_velocity.neuralNetwork import NeuralNetworkPlayer, NeuralNetwork, Neuron, NeuronType, NeuronActivation
 from vertex_velocity.utils import load_image, tint_image
+
+
+NUM_PLAYERS = 10 # Number of players to run, for training purposes.
 
 
 class RLGame(Game):
@@ -124,7 +128,44 @@ def main():
         print("Error: \"-l/--level\" is required.")
         sys.exit(1)
 
-    RLGame(args.level).run()
+    # Initialize the game with the given level.
+    game = RLGame(args.level)
+    basePlayer = NeuralNetworkPlayer(
+        game,
+        game.tilemap,
+        game.PLAYER_INIT_POS,
+        game.PLAYER_SIZE,
+        [
+            NeuralNetwork(
+                game, game.tilemap, [
+                Neuron(
+                    game,
+                    game.tilemap,
+                    NeuronType.AIR,
+                    (400, 0),
+                    NeuronActivation.PRESENCE,
+                ),
+                Neuron(
+                    game,
+                    game.tilemap,
+                    NeuronType.BRICK,
+                    (100, 100),
+                    NeuronActivation.PRESENCE,
+                ),
+                Neuron(
+                    game,
+                    game.tilemap,
+                    NeuronType.SPIKE,
+                    (250, 200),
+                    NeuronActivation.ABSENCE,
+                ),
+            ])
+        ],
+    )
+
+    for i in tqdm(range(NUM_PLAYERS), desc="Running players"):
+        game.player = basePlayer.evolve()
+        game.run()
 
 
 if __name__ == "__main__":

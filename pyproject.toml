@@ -9,6 +9,7 @@ packages = [{include = "vertex_velocity"}]
 [tool.poetry.dependencies]
 python = "^3.13"
 pygame = "^2.6.1"
+tqdm = "^4.67.1"
 
 
 [tool.poetry.group.dev.dependencies]

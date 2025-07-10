@@ -2,6 +2,7 @@
 
 from enum import Enum
 
+import logging
 import pygame
 import random
 
@@ -306,8 +307,12 @@ class NeuralNetworkPlayer(Player):
         if random.random() < PROBA_NEW_NETWORK:
             # Create a new neural network with a random neuron.
             new_neuralNetwork = NeuralNetwork(
-                self.game, self.tilemap,
-                [Neuron(self.game, self.tilemap, random.choice(list(NeuronType)), (0, 0), random.choice(list(NeuronActivation)))]
+                self.game, self.tilemap, [
+                    Neuron(
+                        self.game, self.tilemap, random.choice(list(NeuronType)),
+                        (0, 0), random.choice(list(NeuronActivation))
+                    )
+                ]
             )
             new_neuralNetworks.append(new_neuralNetwork)
             logging.debug(f"Adding new neural network {new_neuralNetwork}")
