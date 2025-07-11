@@ -4,6 +4,7 @@ from tqdm import tqdm
 
 import argparse
 import copy
+import json
 import pygame
 
 from vertex_velocity.game import Game
@@ -83,38 +84,19 @@ class RLGame(Game):
 
         # Check player death.
         if self.player.isDead:
-            print("Player is dead with score:", self.player.score)
             return False
 
         return True
 
-    def render(self):
-        """Render neural network neurons."""
-        self.screen.blit(self.assets["background"], (0, 0))
-
-        renderScroll = [int(pos) for pos in self.scroll]
-        self.tilemap.render(self.screen, renderScroll)
-        self.player.render(self.screen, renderScroll)
-
-        pygame.display.update()
-
     def run(self):
         """Run the game."""
-        # Let's mesure the time.
-        timeBegin = pygame.time.get_ticks()
-
         gameContinue = True
         while gameContinue:
-            self.processInputs()
             gameContinue = self.update()
             self.render()
 
             self.clock.tick(self.FPS)
             self.tickCount += 1
-
-        # Let's mesure the time.
-        timeEnd = pygame.time.get_ticks()
-        print(f"Game finished in {timeEnd - timeBegin} ms with {self.tickCount} ticks.")
 
 
 def main():
@@ -163,10 +145,21 @@ def main():
         ],
     )
 
+    highestScore = (-1, None, None)  # Tuple to store (score, player index, player JSON)
     for i in tqdm(range(NUM_PLAYERS), desc="Running players"):
         game.player = basePlayer.evolve()
         game.run()
+        tqdm.write(f"Player {i + 1} finished with score: {game.player.score}")
+        if game.player.score > highestScore[0]:
+            highestScore = (game.player.score, i + 1, json.dumps(game.player.serialize()))
+            tqdm.write(f"New highest score: {highestScore}")
 
+    print(f"Highest score achieved: {highestScore[0]} by player {highestScore[1]}")
+
+    # Save the best player.
+    bestPlayer = highestScore[2]
+    with open("best_player.json", "w+") as f:
+        f.write(bestPlayer)
 
 if __name__ == "__main__":
     main()

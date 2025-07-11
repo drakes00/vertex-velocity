@@ -74,6 +74,19 @@ class Neuron(Entity):
         """Return a string representation of the neuron."""
         return f"Neuron(type={self.neuronType}, position={self.relPos}, activation={self.activation}, activated={self.activated})"
 
+    def serialize(self):
+        """Convert the neuron to a JSON serializable dictionary.
+        
+        Returns:
+            dict: A dictionary representation of the neuron.
+        """
+        return {
+            "type": self.neuronType.value[0],
+            "position": self.relPos,
+            "activation": self.activation.value,
+            "activated": self.activated
+        }
+
     def update(self):
         """Update the neuron state based on its activation."""
 
@@ -129,6 +142,17 @@ class NeuralNetwork:
     def __repr__(self):
         """Return a string representation of the neural network."""
         return f"NeuralNetwork(activated={self.activated}, neurons={self.neurons})"
+
+    def serialize(self):
+        """Convert the neural network to a JSON serializable dictionary.
+        
+        Returns:
+            dict: A dictionary representation of the neural network.
+        """
+        return {
+            "neurons": [neuron.serialize() for neuron in self.neurons],
+            "activated": self.activated
+        }
 
     def addNeuron(self, neuron: Neuron):
         """Add a neuron to the neural network.
@@ -286,6 +310,18 @@ class NeuralNetworkPlayer(Player):
         self.neuralNetworks = neuralNetworks
         self.activated = False
         self.score = 0
+
+    def serialize(self):
+        """Convert the player to a JSON serializable dictionary.
+        
+        Returns:
+            dict: A dictionary representation of the player.
+        """
+        return {
+            "pos": self.pos,
+            "neuralNetworks": [neuralNetwork.serialize() for neuralNetwork in self.neuralNetworks],
+            "score": self.score
+        }
 
     def evolve(self):
         """Evolve the player's neural networks to create a new player.
