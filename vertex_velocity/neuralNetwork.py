@@ -13,7 +13,7 @@ PROBA_MUTATE_ACTIVATION = 0.1  # Probability of mutating a neuron's activation d
 PROBA_MUTATE_TYPE = 0.1  # Probability of mutating a neuron's type during evolution
 
 PROBA_MOVE_NEURON = 0.8  # Probability of mutating a neuron during evolution
-MOVE_NEURON_RANGE = 10  # Range of movement for a neuron during evolution
+MOVE_NEURON_RANGE = 50  # Range of movement for a neuron during evolution
 
 # Per network mutation probabilities.
 PROBA_REMOVE_NEURON = 0.1  # Probability of removing a neuron during evolution
@@ -102,8 +102,14 @@ class Neuron(Entity):
 
         # Update the activation state based on the tilemap.
         for point in [
-            (self.x, self.y), (self.x + self.NEURON_SIZE[0], self.y), (self.x, self.y + self.NEURON_SIZE[1]),
-            (self.x + self.NEURON_SIZE[0], self.y + self.NEURON_SIZE[1])
+            (self.x,
+             self.y),
+            (self.x + self.NEURON_SIZE[0],
+             self.y),
+            (self.x,
+             self.y + self.NEURON_SIZE[1]),
+            (self.x + self.NEURON_SIZE[0],
+             self.y + self.NEURON_SIZE[1])
         ]:
             tile = self.tilemap.getTileAt(point)
             if tile is not None:
@@ -122,10 +128,33 @@ class Neuron(Entity):
         else:
             self.eType = self.neuronType.value[0]
 
+    @staticmethod
+    def from_dict(game, tilemap, data):
+        """Create a Neuron from a dictionary.
+
+        Args:
+            game (RLGame): The game instance.
+            tilemap (TileMap): The tilemap.
+            data (dict): The dictionary representation of the neuron.
+
+        Returns:
+            Neuron: The deserialized neuron.
+        """
+        # Resolve NeuronType from string
+        neuronType = None
+        for t in NeuronType:
+            if t.value[0] == data["type"]:
+                neuronType = t
+                break
+
+        # Resolve NeuronActivation from string
+        activation = NeuronActivation(data["activation"])
+
+        return Neuron(game, tilemap, neuronType, tuple(data["position"]), activation)
+
 
 class NeuralNetwork:
     """Class representing a neural network for the game."""
-
     def __init__(self, game, tilemap, neurons: list[Neuron]):
         """Initialize the neural network with a list of neurons.
         
@@ -154,6 +183,21 @@ class NeuralNetwork:
             "activated": self.activated
         }
 
+    @staticmethod
+    def from_dict(game, tilemap, data):
+        """Create a NeuralNetwork from a dictionary.
+
+        Args:
+            game (RLGame): The game instance.
+            tilemap (TileMap): The tilemap.
+            data (dict): The dictionary representation of the neural network.
+
+        Returns:
+            NeuralNetwork: The deserialized neural network.
+        """
+        neurons = [Neuron.from_dict(game, tilemap, n_data) for n_data in data["neurons"]]
+        return NeuralNetwork(game, tilemap, neurons)
+
     def addNeuron(self, neuron: Neuron):
         """Add a neuron to the neural network.
         
@@ -179,7 +223,6 @@ class NeuralNetwork:
         Behavior:
             Randomly adds, removes, or mutates neurons based on defined probabilities.
         """
-
         def _pickMutation():
             """Squash all potential mutations into a single random choice."""
             probability = random.random()
@@ -220,8 +263,10 @@ class NeuralNetwork:
             elif randomAction == MuatationType.MOVE:
                 # Randomly adjust the neuron's position relative to its original position.
                 new_neuron.relPos = (
-                    neuron.relPos[0] + random.randint(-MOVE_NEURON_RANGE, MOVE_NEURON_RANGE),
-                    neuron.relPos[1] + random.randint(-MOVE_NEURON_RANGE, MOVE_NEURON_RANGE)
+                    neuron.relPos[0] + random.randint(-MOVE_NEURON_RANGE,
+                                                      MOVE_NEURON_RANGE),
+                    neuron.relPos[1] + random.randint(-MOVE_NEURON_RANGE,
+                                                      MOVE_NEURON_RANGE)
                 )
                 logging.debug(f"Moving neuron {neuron} to new position {new_neuron.relPos}")
 
@@ -237,10 +282,16 @@ class NeuralNetwork:
         if random.random() < PROBA_NEW_NEURON:
             # Create a new neuron with a random type and position.
             new_neuron = Neuron(
-                self.game, self.tilemap, random.choice(list(NeuronType)), (
+                self.game,
+                self.tilemap,
+                random.choice(list(NeuronType)),
+                (
                     random.randint(-NEW_NERON_POS_RANGE,
-                                   NEW_NERON_POS_RANGE), random.randint(-NEW_NERON_POS_RANGE, NEW_NERON_POS_RANGE)
-                ), random.choice(list(NeuronActivation))
+                                   NEW_NERON_POS_RANGE),
+                    random.randint(-NEW_NERON_POS_RANGE,
+                                   NEW_NERON_POS_RANGE)
+                ),
+                random.choice(list(NeuronActivation))
             )
             logging.debug(f"Adding new neuron {new_neuron}")
 
@@ -281,21 +332,35 @@ class NeuralNetwork:
                 pygame.draw.circle(surface, (255, 255, 255), (int(center_x - scroll[0]), int(center_y - scroll[1])), 20)
             else:
                 pygame.draw.circle(
-                    surface, (100, 100, 100), (int(center_x - scroll[0]), int(center_y - scroll[1])), 20, 5
+                    surface,
+                    (100,
+                     100,
+                     100),
+                    (int(center_x - scroll[0]),
+                     int(center_y - scroll[1])),
+                    20,
+                    5
                 )
 
             # Render the connections between neurons and center.
             for neuron in self.neurons:
                 pygame.draw.line(
-                    surface, (255, 255, 255) if neuron.activated else (100, 100, 100),
-                    (int(center_x - scroll[0]), int(center_y - scroll[1])),
-                    (int(neuron.center[0] - scroll[0]), int(neuron.center[1] - scroll[1])), 2
+                    surface,
+                    (255,
+                     255,
+                     255) if neuron.activated else (100,
+                                                    100,
+                                                    100),
+                    (int(center_x - scroll[0]),
+                     int(center_y - scroll[1])),
+                    (int(neuron.center[0] - scroll[0]),
+                     int(neuron.center[1] - scroll[1])),
+                    2
                 )
 
 
 class NeuralNetworkPlayer(Player):
     """Class representing a player controlled by a neural network."""
-
     def __init__(self, game, tilemap, pos, size, neuralNetworks: list[NeuralNetwork]):
         """Initialize the neural network player.
         
@@ -323,6 +388,22 @@ class NeuralNetworkPlayer(Player):
             "score": self.score
         }
 
+    @staticmethod
+    def from_dict(game, tilemap, data):
+        """Create a NeuralNetworkPlayer from a dictionary.
+
+        Args:
+            game (RLGame): The game instance.
+            tilemap (TileMap): The tilemap.
+            data (dict): The dictionary representation of the player.
+
+        Returns:
+            NeuralNetworkPlayer: The deserialized player.
+        """
+        neuralNetworks = [NeuralNetwork.from_dict(game, tilemap, nn_data) for nn_data in data["neuralNetworks"]]
+        # We ignore the saved position and score, as we want to start a fresh run with this brain.
+        return NeuralNetworkPlayer(game, tilemap, game.PLAYER_INIT_POS, game.PLAYER_SIZE, neuralNetworks)
+
     def evolve(self):
         """Evolve the player's neural networks to create a new player.
         
@@ -343,10 +424,16 @@ class NeuralNetworkPlayer(Player):
         if random.random() < PROBA_NEW_NETWORK:
             # Create a new neural network with a random neuron.
             new_neuralNetwork = NeuralNetwork(
-                self.game, self.tilemap, [
+                self.game,
+                self.tilemap,
+                [
                     Neuron(
-                        self.game, self.tilemap, random.choice(list(NeuronType)),
-                        (0, 0), random.choice(list(NeuronActivation))
+                        self.game,
+                        self.tilemap,
+                        random.choice(list(NeuronType)),
+                        (0,
+                         0),
+                        random.choice(list(NeuronActivation))
                     )
                 ]
             )
