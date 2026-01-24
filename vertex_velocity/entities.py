@@ -474,3 +474,44 @@ class Player(AliveEntity, OpaqueEntity, PhysicsEntity, Entity):
                     self.entityState = "dead"
             else:
                 dust.render(surface, scroll)
+
+    def isDangerAhead(self, lookahead=2):
+        """Check if there is danger ahead of the player.
+        
+        Args:
+            lookahead (int): Number of tiles to look ahead.
+            
+        Returns:
+            bool: True if there is a deadly tile or empty space ahead, False otherwise.
+        """
+        # Get the tile position of the player's front (right side).
+        front_tile_x = int((self.x + self.size[0]) // self.tilemap.tileSize)
+        front_tile_y = int((self.y + self.size[1] - 1) // self.tilemap.tileSize) # Check foot level
+
+        # Check tiles ahead.
+        for i in range(0, lookahead):
+            target_x = front_tile_x + i
+            
+            # 1. Check for deadly tiles at head or foot level.
+            # Using rects to be precise or tile lookup? Tile lookup is faster.
+            # Check foot level (ground) for spikes
+            tile_at_foot = self.tilemap.getTileAt((target_x * self.tilemap.tileSize, front_tile_y * self.tilemap.tileSize))
+            if tile_at_foot and self.tilemap.isTileDeadly(tile_at_foot):
+                 return True
+            
+            # Check head level for obstacles/spikes
+            tile_at_head = self.tilemap.getTileAt((target_x * self.tilemap.tileSize, self.y))
+            if tile_at_head and self.tilemap.isTileDeadly(tile_at_head):
+                return True
+
+            # 2. Check for "Pit" (Absence of ground).
+            # If there is NO tile at foot level (or below), it's a pit.
+            # We check the tile directly below the "foot" tile.
+            tile_below_foot = self.tilemap.getTileAt((target_x * self.tilemap.tileSize, (front_tile_y + 1) * self.tilemap.tileSize))
+            
+            # If the tile below is NOT solid, it might be a pit.
+            # We consider it a pit if it's air.
+            if tile_below_foot is None or not self.tilemap.isTileSolid(tile_below_foot):
+                return True
+                
+        return False
